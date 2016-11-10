@@ -1,0 +1,49 @@
+Université de Sherbrooke
+INF781
+QUIZ 2 AI BootCamp TC020-TC030
+Olivier Bonnemains, Éric Maines
+
+
+
+
+
+
+
+
+- Liens , Arrêtes, Filtrage des noeuds (clean)
+Chaque tuile est modélisée par un entier, son id, qui servira à repérer sa position dans l’espace (en fonction du nombre de colonnes et de lignes) 
+Chaque liaison est  modélisée par 4 entiers: Les deux premiers correspondent aux tuiles liées et les deux autres à l’orientation de la liaison.
+- class Graph
+La classe graph est donc composée d’un vecteur de noeuds et d’un autre de tuiles ainsi que des infos du niveau.  Avec ces attributs il possède des fonctions length (permettant de calculer la distance entre deux tuiles) neighbours (permettant de trouver les voisins d’une tuile), et bestPath (permettant de trouver le meilleur chemin entre deux tuiles par l’algorithme A*).
+
+
+- Modélisation:
+Lors de l’initialisation du graphes, toutes les tuiles sont placées et toutes les liaisons sont considérés présentes. Dans le cas omniscient, un parcours du graph est fait immédiatement après pour supprimer arêtes menant à des tuiles occupés, interdites ou séparées par un mur. Dans le cas de vision limité, ce parcours se fera à chaque tour en fonction des tuiles découvertes.
+
+
+
+
+
+
+La méthode neighbors retourne les voisins de l’arc afin de de déterminer les voisins d’une tuile dans un graphe. On considère toutes les cases adjacentes pour lesquelles il existe une liaison.
+
+
+
+
+Pour les tableaux avec vision, lorsque aucun path est trouvé, à cause du  au manque de temps, nous envoyons directement une direction afin d’améliorer la chance de voir un noeud final. 
+
+
+Temps passé estimé:
+10h x (Nb Semaines-2)
+
+
+NOTE: La version du engine 0.32 est requise.
+
+
+Références: 
+Artificial Intelligence, 2nd edition, Ian Millington, John Funge
+https://fr.wikipedia.org/wiki/Algorithme_A*
+https://en.wikipedia.org/wiki/A*_search_algorithm
+A* Pathfinding (E01: algorithm explanation), Sebastian Lague, https://www.youtube.com/watch?v=-L-WgKMFuhE&feature=youtu.be
+http://theory.stanford.edu/~amitp/GameProgramming/AStarComparison.html
+Calculating distance using hex coordinate system, Stefano MAC:GREGOR, rec.games.design, https://groups.google.com/forum/#!msg/rec.games.design/-5n_Km1SqWc/623tbdMnUwwJ
