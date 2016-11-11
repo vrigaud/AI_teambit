@@ -1,5 +1,7 @@
 /*.*
 /*/
-!/AI_Teambit/MyBotLogic/
-!/AI_Teambit/CMakeLists.txt
+!AI_Teambit/
+AI_Teambit/*
+!AI_Teambit/MyBotLogic
+!AI_Teambit/CMakeLists.txt
 !/teamcode/
