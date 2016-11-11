@@ -3,7 +3,6 @@
 #include "BotLogicIF.h"
 #include "Logger.h"
 #include "Map.h"
-#include "Npc.h"
 
 #ifdef _DEBUG
    #define BOT_LOGIC_DEBUG
@@ -20,11 +19,8 @@
 class MyBotLogic : public virtual BotLogicIF
 {
     // debug stuff
-    unsigned m_turnCount;
-    std::string m_logPath;
-    bool m_isNodesInit = false;
-    std::map<unsigned int, unsigned int> m_nextNpcMove;
-    std::map<unsigned int, Npc*> m_npcs;
+    unsigned mTurnCount;
+    std::string mLogPath;
 public:
 	MyBotLogic();
 	virtual ~MyBotLogic();
@@ -34,7 +30,7 @@ public:
 	virtual void OnBotInitialized();
 	virtual void Init(LevelInfo& _levelInfo);
 	virtual void OnGameStarted();
-	virtual void FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList);   //calculate moves for a single turn
+	virtual void FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList);  
 	virtual void Exit();
 
 protected:

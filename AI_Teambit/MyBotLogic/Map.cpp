@@ -1,35 +1,98 @@
 #include "Map.h"
 #include "TurnInfo.h"
-#include "SearchMap.h"
 #include "NPCInfo.h"
 #include <Math.h>
+#include <algorithm>
 
-Map Map::m_instance;
+Map Map::mInstance;
 
 void Map::setLoggerPath(const std::string &a_path)
 {
 #ifdef BOT_LOGIC_DEBUG_MAP
-    m_logger.Init(a_path, "Map.log");
-    m_loggerInfluence.Init(a_path, "Map_Influence.log");
+    mLogger.Init(a_path, "Map.log");
+    mLoggerInfluence.Init(a_path, "Map_Influence.log");
+    mLoggerEdges.Init(a_path, "Map_Edges.log");
 #endif
 
-    BOT_LOGIC_MAP_LOG(m_logger, "Configure", true);
-    BOT_LOGIC_MAP_LOG(m_loggerInfluence, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLogger, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLoggerInfluence, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - HighWall | 1 - Window \n", true);
 }
 
-void Map::setNodeType(unsigned int tileId, Node::NodeType tileType)
+void Map::initMap(int height, int width, int visionRange)
 {
-    m_nodeMap[tileId]->setType(tileType);
+    setHeight(height);
+    setWidth(width);
+    setInfluenceRange(std::max(visionRange + 2, 4));
+    unsigned int countIndex = 0;
+    for (int i = 0; i < mHeight; ++i)
+    {
+        for (int j = 0; j < mWidth; ++j)
+        {
+            createNode(new Node{ j, i, countIndex, Node::NONE });
+            countIndex++;
+        }
+    }
+    connectNodes();
+}
+
+void Map::updateMap(TurnInfo& turnInfo)
+{
+    updateTiles(turnInfo);
+    updateEdges(turnInfo);
+}
+
+void Map::updateEdges(TurnInfo& turnInfo)
+{
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, "/nUpdate Edges", true);
+    for (std::pair<unsigned, ObjectInfo> info : turnInfo.objects)
+    {
+        Node* node = getNode(info.second.tileID);
+        for (int i = N; i <= NW; ++i)
+        {
+            if (info.second.edgesCost[i] == 0)
+            {
+                BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : " + std::to_string(info.second.objectType), true);
+                node->setEdgeCost(static_cast<EDirection>(i), info.second.objectType + 1);
+            }
+        }
+    }
+}
+
+void Map::updateTiles(TurnInfo& turnInfo)
+{
+    for(auto info : turnInfo.tiles)
+    {
+        auto tileInfo = info.second;
+
+        auto ITisForbidden = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden);
+        auto ITisTarget = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target);
+        auto ITisDescriptor = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Descriptor);
+        if (ITisForbidden != tileInfo.tileAttributes.end())
+        {
+            setNodeType(tileInfo.tileID, Node::FORBIDDEN);
+        }
+        else if (ITisTarget != tileInfo.tileAttributes.end())
+        {
+            setNodeType(tileInfo.tileID, Node::GOAL);
+            addGoalTile(tileInfo.tileID);
+        }
+        else if (ITisDescriptor != tileInfo.tileAttributes.end())
+        {
+            setNodeType(tileInfo.tileID, Node::PATH);
+        }
+    }
 }
 
 void Map::createNode(Node* node)
 {
-    m_nodeMap[node->getId()] = node;
+    mNodeMap.emplace_back(node);
 }
 
 void Map::connectNodes()
 {
-    for(std::pair<unsigned int, Node*> curNode : m_nodeMap)
+    for(Node* curNode : mNodeMap)
     {
         // connecting
         Node* nw;
@@ -38,31 +101,36 @@ void Map::connectNodes()
         Node* se;
         Node* sw;
         Node* w;
-        if(curNode.second->getPosition()->y % 2 == 0)
+        if(curNode->getPosition()->y % 2 == 0)
         {
-            nw = getNode(curNode.second->getPosition()->x - 1, curNode.second->getPosition()->y - 1);
-            ne = getNode(curNode.second->getPosition()->x, curNode.second->getPosition()->y - 1);
-            e = getNode(curNode.second->getPosition()->x + 1, curNode.second->getPosition()->y);
-            se = getNode(curNode.second->getPosition()->x, curNode.second->getPosition()->y + 1);
-            sw = getNode(curNode.second->getPosition()->x - 1, curNode.second->getPosition()->y + 1);
-            w = getNode(curNode.second->getPosition()->x - 1, curNode.second->getPosition()->y);
+            nw = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y - 1);
+            ne = getNode(curNode->getPosition()->x, curNode->getPosition()->y - 1);
+            e = getNode(curNode->getPosition()->x + 1, curNode->getPosition()->y);
+            se = getNode(curNode->getPosition()->x, curNode->getPosition()->y + 1);
+            sw = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y + 1);
+            w = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y);
         }
         else
         {
-            nw = getNode(curNode.second->getPosition()->x, curNode.second->getPosition()->y - 1);
-            ne = getNode(curNode.second->getPosition()->x + 1, curNode.second->getPosition()->y - 1);
-            e = getNode(curNode.second->getPosition()->x + 1, curNode.second->getPosition()->y);
-            se = getNode(curNode.second->getPosition()->x + 1, curNode.second->getPosition()->y + 1);
-            sw = getNode(curNode.second->getPosition()->x, curNode.second->getPosition()->y + 1);
-            w = getNode(curNode.second->getPosition()->x - 1, curNode.second->getPosition()->y);
+            nw = getNode(curNode->getPosition()->x, curNode->getPosition()->y - 1);
+            ne = getNode(curNode->getPosition()->x + 1, curNode->getPosition()->y - 1);
+            e = getNode(curNode->getPosition()->x + 1, curNode->getPosition()->y);
+            se = getNode(curNode->getPosition()->x + 1, curNode->getPosition()->y + 1);
+            sw = getNode(curNode->getPosition()->x, curNode->getPosition()->y + 1);
+            w = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y);
         }
-        curNode.second->setNeighboor(NW, nw);
-        curNode.second->setNeighboor(NE, ne);
-        curNode.second->setNeighboor(E, e);
-        curNode.second->setNeighboor(SE, se);
-        curNode.second->setNeighboor(SW, sw);
-        curNode.second->setNeighboor(W, w);
+        curNode->setNeighboor(NW, nw);
+        curNode->setNeighboor(NE, ne);
+        curNode->setNeighboor(E, e);
+        curNode->setNeighboor(SE, se);
+        curNode->setNeighboor(SW, sw);
+        curNode->setNeighboor(W, w);
     }
+}
+
+void Map::setNodeType(unsigned int tileId, Node::NodeType tileType)
+{
+    mNodeMap[tileId]->setType(tileType);
 }
 
 Node* Map::getNode(unsigned int x, unsigned int y)
@@ -71,98 +139,34 @@ Node* Map::getNode(unsigned int x, unsigned int y)
     {
         return nullptr;
     }
-    unsigned int index = x + y * m_width;
-    return m_nodeMap[index];
+    unsigned int index = x + y * mWidth;
+    return mNodeMap[index];
 }
 
 Node* Map::getNode(unsigned int index)
 {
-    return m_nodeMap[index];
+    return mNodeMap[index];
 }
 
 float Map::calculateDistance(int indexStart, int indexEnd)
 {
-    Node* start = m_nodeMap[indexStart];
-    Node* end = m_nodeMap[indexEnd];
-    int x = start->getPosition()->x - end->getPosition()->x;
-    int y = start->getPosition()->y - end->getPosition()->y;
-    return abs(x) + abs(y);
+    unsigned int firstX = indexStart % mWidth;
+    unsigned int firstY = indexStart / mWidth;
+    unsigned int sndX = indexEnd % mWidth;
+    unsigned int sndY = indexEnd / mWidth;
+
+    int deltaX = static_cast<int>(sndX - firstX);
+    int deltaY = static_cast<int>(sndY - firstY);
+    int deltas = deltaY - deltaX;
+    return std::max(abs(deltaX), std::max(abs(deltaY), abs(deltas)));
 }
 
-std::map<unsigned, unsigned> Map::getBestGoalTile(std::map<unsigned, NPCInfo> npcInfo)
-{
-    std::map<unsigned, unsigned> goalMap;
-    if(m_goalTiles.size() > npcInfo.size())
-    {
-        auto copyMapGoal = m_goalTiles;
-        for(std::pair<unsigned, NPCInfo> npc : npcInfo)
-        {
-            int bestDist = 666;
-            unsigned goalId = -1;
-            std::vector<unsigned>::iterator goalIt = begin(copyMapGoal);
-            for(; goalIt != end(copyMapGoal); ++goalIt)
-            {
-                float distance = calculateDistance(npc.second.tileID, *goalIt);
-                if(distance < bestDist)
-                {
-                    goalId = *goalIt;
-                    bestDist = distance;
-                }
-            }
-            goalMap[npc.second.npcID] = goalId;
-            copyMapGoal.erase(std::find(begin(copyMapGoal), end(copyMapGoal), goalId));
-        }
-    }
-    else
-    {
-        for(unsigned goal : m_goalTiles)
-        {
-            if(npcInfo.size() <= 0)
-            {
-                break;
-            }
-            int bestDist = 666;
-            int npcId = -1;
-            for(std::pair<unsigned, NPCInfo> npc : npcInfo)
-            {
-                float distance = calculateDistance(npc.second.tileID, goal);
-                if(distance < bestDist)
-                {
-                    npcId = npc.second.npcID;
-                    bestDist = distance;
-                }
-            }
-            goalMap[npcId] = goal;
-            npcInfo.erase(npcId);
-        }
-    }
-
-    return goalMap;
-}
-
-// TODO - See if we can implement this
-//std::vector<unsigned> Map::getMostInfluencedTile()
-//{
-//    std::vector<unsigned> v;
-//    for(auto node : m_seenTiles)
-//    {
-//        if(!node.second)
-//        {
-//            
-//        }
-//    }
-//    for(auto node : m_interestingNodes)
-//    {
-//        v.push_back(node->getId());
-//    }
-//    return v;
-//}
 
 void Map::addGoalTile(unsigned int number)
 {
-    if(std::find(begin(m_goalTiles), end(m_goalTiles), number) == end(m_goalTiles))
+    if(std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))
     {
-        bool canAccesTile = false;
+        bool canAccessTile = false;
         Node* currentNode = getNode(number);
 
         for(int i = N; i <= NW; ++i)
@@ -172,280 +176,16 @@ void Map::addGoalTile(unsigned int number)
             Node* tempNode = currentNode->getNeighboor(dir);
             if(tempNode != nullptr && (!currentNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
             {
-                canAccesTile = true;
+                canAccessTile = true;
             }
         }
 
-        if(canAccesTile)
+        if(canAccessTile)
         {
-            m_goalTiles.push_back(number);
+            mGoalTiles.push_back(number);
         }
     }
 }
-
-void Map::createInfluenceMap()
-{
-    m_interestingNodes.clear();
-    for(auto node : m_seenTiles)
-    {
-        Node* myNode = getNode(node.first);
-        myNode->setInfluence(0.0f);
-        if(!node.second)
-        {
-            float tempInflu = 0.0f;
-            for(int i = N; i <= NW; ++i)
-            {
-                EDirection dir = static_cast<EDirection>(i);
-                EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-                auto edgeType = myNode->getEdge(dir);
-                Node* tempNode = myNode->getNeighboor(dir);
-                auto edgeNeibType = Node::FREE;
-                if(tempNode != nullptr)
-                {
-                    edgeNeibType = tempNode->getEdge(invDir);
-                }
-                if(edgeType == Node::WINDOW || edgeNeibType == Node::WINDOW)
-                {
-                    tempInflu += 1.0f;
-                }
-            }
-
-            for(int i = N; i <= NW; ++i)
-            {
-                EDirection dir = static_cast<EDirection>(i);
-                EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-                Node* tempNode = myNode->getNeighboor(dir);
-                if(tempNode != nullptr && (!myNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
-                {
-                    if(tempNode->getType() == Node::NONE)
-                    {
-                        tempNode->setInfluence(1.0f);
-                        m_interestingNodes.push_back(tempNode);
-                    }
-                }
-            }
-            if(tempInflu > 0.0f)
-            {
-                myNode->setInfluence(tempInflu);
-                m_interestingNodes.push_back(myNode);
-            }
-        }
-    }
-    std::sort(begin(m_interestingNodes), end(m_interestingNodes), [](const Node* a, const Node* b) {
-        return a->getInfluence() > b->getInfluence();
-    });
-    propagateInfluence();
-}
-
-void Map::propagateInfluence()
-{
-    unsigned maxDist = m_influenceRange;
-    for(auto node : m_interestingNodes)
-    {
-        propage(node, 0, maxDist, node->getInfluence());
-    }
-}
-
-void Map::propage(Node* myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const
-{
-    if(curDist > maxDist)
-    {
-        return;
-    }
-    for(int i = N; i <= NW; ++i)
-    {
-        EDirection dir = static_cast<EDirection>(i);
-        EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-        Node* tempNode = myNode->getNeighboor(dir);
-        if(tempNode != nullptr && (!myNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
-        {
-            if(tempNode->getType() == Node::PATH)
-            {
-                auto newInfluence = myNode->getInfluence() - (initialInfluence / m_influenceRange);
-                if(newInfluence > tempNode->getInfluence())
-                {
-                    tempNode->setInfluence(newInfluence);
-                }
-                propage(tempNode, ++curDist, maxDist, initialInfluence);
-            }
-        }
-    }
-}
-
-EDirection Map::getNextDirection(unsigned int a_start, unsigned int a_end)
-{
-    std::string direction = getStringDirection(a_start, a_end);
-
-    if(direction == "N")
-    {
-        return N;
-    }
-    if(direction == "E")
-    {
-        return E;
-    }
-    if(direction == "W")
-    {
-        return W;
-    }
-    if(direction == "S")
-    {
-        return S;
-    }
-    if(direction == "NW")
-    {
-        return NW;
-    }
-    if(direction == "NE")
-    {
-        return NE;
-    }
-    if(direction == "SW")
-    {
-        return SW;
-    }
-    if(direction == "SE")
-    {
-        return SE;
-    }
-    return NE;
-}
-
-std::string Map::getStringDirection(unsigned int start, unsigned int end)
-{
-    Node* nStart = m_nodeMap[start];
-    Node* nEnd = m_nodeMap[end];
-    int x = nEnd->getPosition()->x - nStart->getPosition()->x;
-    int y = nEnd->getPosition()->y - nStart->getPosition()->y;
-
-    std::string direction{""};
-
-    // Set the North/South direction
-    if(y < 0)
-    {
-        direction += "N";
-    }
-    else if(y > 0)
-    {
-        direction += "S";
-    }
-
-    // Depending on the row, we need to adapt the West.East direction
-    if(nStart->getPosition()->y % 2 == 0)
-    {
-        if(x < 0)
-        {
-            direction += "W";
-        }
-        else
-        {
-            direction += "E";
-        }
-    }
-    else
-    {
-        if(x > 0)
-        {
-            direction += "E";
-        }
-        else
-        {
-            direction += "W";
-        }
-    }
-
-    return direction;
-}
-
-std::vector<unsigned int> Map::getNpcPath(unsigned int a_start, unsigned int a_end, std::set<Node::NodeType> forbiddenType)
-{
-    SearchMap mySearch{getNode(a_start), getNode(a_end), forbiddenType};
-    return mySearch.search();
-}
-
-bool Map::canMoveOnTile(unsigned int a_fromTileId, unsigned int a_toTileId)
-{
-    if(a_fromTileId == a_toTileId)
-    {
-        return true;
-    }
-
-    bool isStateOk = !(getNode(a_toTileId)->getType() == Node::FORBIDDEN || getNode(a_toTileId)->getType() == Node::OCCUPIED);
-    EDirection dir = getNextDirection(a_fromTileId, a_toTileId);
-    EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-    return isStateOk && !getNode(a_fromTileId)->isEdgeBlocked(dir) && !getNode(a_toTileId)->isEdgeBlocked(invDir);
-}
-
-std::vector<unsigned int> Map::getNearInfluencedTile(unsigned int a_currentId)
-{
-    Node* current = getNode(a_currentId);
-    std::vector<unsigned int> v;
-
-    if(isAllNeighboorHaveSameInfluence(current))
-    {
-        return v;
-    }
-
-    float bestinf = 0.0f;
-    unsigned bestTile;
-    for(int i = N; i <= NW; ++i)
-    {
-        Node* neighboor = current->getNeighboor(static_cast<EDirection>(i));
-        if(neighboor && canMoveOnTile(a_currentId, neighboor->getId()))
-        {
-            float nodeinf = neighboor->getInfluence();
-            if(nodeinf > 0.0f)
-            {
-                if(bestinf < nodeinf)
-                {
-                    bestinf = nodeinf;
-                    bestTile = neighboor->getId();
-                }
-            }
-        }
-    }
-    v.push_back(bestTile);
-    return v;
-}
-
-bool Map::isAllNeighboorHaveSameInfluence(Node* node)
-{
-    float startInf = 0.0f;
-    int counterTile = 0;
-    for(int i = N; i <= NW; ++i)
-    {
-        Node* neighboor = node->getNeighboor(static_cast<EDirection>(i));
-        if(neighboor && canMoveOnTile(node->getId(), neighboor->getId()))
-        {
-            counterTile++;
-            if(startInf == 0.0f)
-            {
-                startInf = neighboor->getInfluence();
-            }
-
-            if(startInf != neighboor->getInfluence())
-            {
-                return false;
-            }
-        }
-    }
-    // Ensure moving on the only available tile !
-    if(counterTile == 1)
-    {
-        return false;
-    }
-    return true;
-}
-
-void Map::testAddTile(std::vector<unsigned int>& v, unsigned int fromTileId, unsigned int toTileId)
-{
-    if(canMoveOnTile(fromTileId, toTileId) && !isVisited(toTileId))
-    {
-        v.push_back(toTileId);
-    }
-}
-
-
 
 
 //----------------------------------------------------------------------
@@ -457,18 +197,18 @@ void Map::logMap(unsigned nbTurn)
     std::string myLog = "\nTurn #" + std::to_string(nbTurn) + "\n";
 
     // Printing some infos
-    myLog += "\tAccessible Goal Number : " + std::to_string(m_goalTiles.size()) + "\n";
+    myLog += "\tAccessible Goal Number : " + std::to_string(mGoalTiles.size()) + "\n";
 
     // Printing the map
     myLog += "Map : \n";
     unsigned int currentTileId{};
-    for(int row = 0; row < m_height; ++row)
+    for(int row = 0; row < mHeight; ++row)
     {
         if(row % 2)
         {
             myLog += "   ";
         }
-        for(int col = 0; col < m_width; ++col)
+        for(int col = 0; col < mWidth; ++col)
         {
             Node* tempNode = getNode(currentTileId++);
             if(tempNode->getNpcIdOnNode() > 0)
@@ -501,7 +241,7 @@ void Map::logMap(unsigned nbTurn)
         }
         myLog += "\n";
     }
-    BOT_LOGIC_MAP_LOG(m_logger, myLog, false);
+    BOT_LOGIC_MAP_LOG(mLogger, myLog, false);
 #endif
 
 }
@@ -514,13 +254,13 @@ void Map::logInfluenceMap(unsigned nbTurn)
     // Printing the map
     myLog += "Map : \n";
     unsigned int currentTileId{};
-    for(int row = 0; row < m_height; ++row)
+    for(int row = 0; row < mHeight; ++row)
     {
         if(row % 2)
         {
             myLog += "   ";
         }
-        for(int col = 0; col < m_width; ++col)
+        for(int col = 0; col < mWidth; ++col)
         {
             Node* tempNode = getNode(currentTileId++);
             float influ = std::trunc(100 * tempNode->getInfluence()) / 100;
@@ -536,7 +276,7 @@ void Map::logInfluenceMap(unsigned nbTurn)
         }
         myLog += "\n";
     }
-    BOT_LOGIC_MAP_LOG(m_loggerInfluence, myLog, false);
+    BOT_LOGIC_MAP_LOG(mLoggerInfluence, myLog, false);
 #endif
 
 }
