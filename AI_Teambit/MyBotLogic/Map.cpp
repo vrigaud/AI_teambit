@@ -15,9 +15,11 @@ void Map::setLoggerPath(const std::string &a_path)
 #endif
 
     BOT_LOGIC_MAP_LOG(mLogger, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLogger, " - - NONE | F - Forbidden | G - Goal | X - Occupied | P - Path | S - Pressure plate \n", true);
     BOT_LOGIC_MAP_LOG(mLoggerInfluence, "Configure", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, "Configure", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - HighWall | 1 - Window \n", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - N | 1 - NE | 2 - E | 3 - SE | 4 - S | 5 - SW | 6 - W | 7 - NW \n", true);
 }
 
 void Map::initMap(int height, int width, int visionRange)
@@ -256,7 +258,7 @@ void Map::logMap(unsigned nbTurn)
                         myLog += "P----";
                         break;
                     case Node::NodeType::PRESSURE_PLATE:
-                        myLog += "D----";
+                        myLog += "S----";
                         break;
                 }
             }
