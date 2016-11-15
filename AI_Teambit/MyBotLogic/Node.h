@@ -21,13 +21,16 @@ public:
         FORBIDDEN,
         GOAL,
         OCCUPIED,
-        PATH,
+        PRESSURE_PLATE,
+        PATH
     };
     enum EdgeType
     {
         FREE,
         WALL,
         WINDOW,
+        DOOR,
+        DOOR_W
     };
 private:
     Position* m_pos;

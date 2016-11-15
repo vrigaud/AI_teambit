@@ -45,7 +45,7 @@ void Map::updateMap(TurnInfo& turnInfo)
 
 void Map::updateEdges(TurnInfo& turnInfo)
 {
-    BOT_LOGIC_MAP_LOG(mLoggerEdges, "/nUpdate Edges", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\nUpdate Edges", true);
     for (std::pair<unsigned, ObjectInfo> info : turnInfo.objects)
     {
         Node* node = getNode(info.second.tileID);
@@ -53,8 +53,24 @@ void Map::updateEdges(TurnInfo& turnInfo)
         {
             if (info.second.edgesCost[i] == 0)
             {
-                BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : " + std::to_string(info.second.objectType), true);
-                node->setEdgeCost(static_cast<EDirection>(i), info.second.objectType + 1);
+                if (!info.second.associatedControllers.empty())
+                {
+                    if (info.second.objectType == ObjectType_HighWall)
+                    {
+                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR", true);
+                        node->setEdgeCost(static_cast<EDirection>(i), Node::DOOR);
+                    }
+                    else if (info.second.objectType == ObjectType_Window)
+                    {
+                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", true);
+                        node->setEdgeCost(static_cast<EDirection>(i), Node::DOOR_W);
+                    }
+                }
+                else
+                {
+                    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : " + std::to_string(info.second.objectType), true);
+                    node->setEdgeCost(static_cast<EDirection>(i), info.second.objectType + 1);
+                }
             }
         }
     }
@@ -66,19 +82,24 @@ void Map::updateTiles(TurnInfo& turnInfo)
     {
         auto tileInfo = info.second;
 
-        auto ITisForbidden = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden);
-        auto ITisTarget = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target);
-        auto ITisDescriptor = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Descriptor);
-        if (ITisForbidden != tileInfo.tileAttributes.end())
+//        auto ITisForbidden = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden);
+//        auto ITisTarget = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target);
+//        auto ITisDescriptor = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Descriptor);
+//        auto ITisPressurePlate = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_PressurePlate);
+        if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::FORBIDDEN);
         }
-        else if (ITisTarget != tileInfo.tileAttributes.end())
+        else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::GOAL);
             addGoalTile(tileInfo.tileID);
         }
-        else if (ITisDescriptor != tileInfo.tileAttributes.end())
+        else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_PressurePlate) != tileInfo.tileAttributes.end())
+        {
+            setNodeType(tileInfo.tileID, Node::PRESSURE_PLATE);
+        }
+        else
         {
             setNodeType(tileInfo.tileID, Node::PATH);
         }
@@ -222,7 +243,6 @@ void Map::logMap(unsigned nbTurn)
                     case Node::NodeType::NONE:
                         myLog += "-----";
                         break;
-
                     case Node::NodeType::FORBIDDEN:
                         myLog += "F----";
                         break;
@@ -234,6 +254,9 @@ void Map::logMap(unsigned nbTurn)
                         break;
                     case Node::NodeType::PATH:
                         myLog += "P----";
+                        break;
+                    case Node::NodeType::PRESSURE_PLATE:
+                        myLog += "D----";
                         break;
                 }
             }
