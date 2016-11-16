@@ -1,13 +1,15 @@
 #include "Map.h"
 #include "TurnInfo.h"
 #include "NPCInfo.h"
+#include "LoggerPath.h"
 #include <Math.h>
 #include <algorithm>
 
 Map Map::mInstance;
 
-void Map::setLoggerPath(const std::string &a_path)
+void Map::setLoggerPath()
 {
+    std::string a_path = LoggerPath::getInstance()->getPath();
 #ifdef BOT_LOGIC_DEBUG_MAP
     mLogger.Init(a_path, "Map.log");
     mLoggerInfluence.Init(a_path, "Map_Influence.log");

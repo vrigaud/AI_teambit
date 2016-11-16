@@ -2,6 +2,7 @@
 #include "TurnInfo.h"
 #include "LevelInfo.h"
 #include "Map.h"
+#include "LoggerPath.h"
 #include <windows.h>
 #include <algorithm>
 
@@ -17,13 +18,13 @@ MyBotLogic::~MyBotLogic()
 
 void MyBotLogic::Configure(int argc, char *argv[], const std::string& _logpath)
 {
-    mLogPath = _logpath;
 #ifdef BOT_LOGIC_DEBUG
     mLogger.Init(_logpath, "MyBotLogic.log");
 #endif
 
     BOT_LOGIC_LOG(mLogger, "Configure", true);
-    Map::getInstance()->setLoggerPath(_logpath);
+    LoggerPath::getInstance()->setPath(_logpath);
+    Map::getInstance()->setLoggerPath();
     mTurnCount = 0;
 }
 
@@ -38,6 +39,10 @@ void MyBotLogic::Load()
 void MyBotLogic::Init(LevelInfo& _levelInfo)
 {
     Map::getInstance()->initMap(_levelInfo.rowCount, _levelInfo.colCount, _levelInfo.visionRange);
+    for (auto npc : _levelInfo.npcs)
+    {
+        mNpcs.push_back(new Npc(npc.second.npcID, npc.second.tileID));
+    }
 }
 
 void MyBotLogic::OnBotInitialized()

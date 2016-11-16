@@ -86,7 +86,7 @@ public:
     {
         mInfluenceRange = range;
     }
-    void setLoggerPath(const std::string &a_path);
+    void setLoggerPath();
 
     void logMap(unsigned);
     void logInfluenceMap(unsigned nbTurn);
