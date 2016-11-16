@@ -2,6 +2,7 @@
 #include "TurnInfo.h"
 #include "LevelInfo.h"
 #include "Map.h"
+#include "MiCoMa.h"
 #include "LoggerPath.h"
 #include <windows.h>
 #include <algorithm>
@@ -39,10 +40,7 @@ void MyBotLogic::Load()
 void MyBotLogic::Init(LevelInfo& _levelInfo)
 {
     Map::getInstance()->initMap(_levelInfo.rowCount, _levelInfo.colCount, _levelInfo.visionRange);
-    for (auto npc : _levelInfo.npcs)
-    {
-        mNpcs.push_back(new Npc(npc.second.npcID, npc.second.tileID));
-    }
+    MiCoMa::getInstance()->init(_levelInfo);
 }
 
 void MyBotLogic::OnBotInitialized()
@@ -64,6 +62,8 @@ void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _acti
     Map::getInstance()->updateMap(_turnInfo);
 
     Map::getInstance()->logMap(mTurnCount);
+
+    MiCoMa::getInstance()->update(_turnInfo);
 }
 
 void MyBotLogic::Exit()

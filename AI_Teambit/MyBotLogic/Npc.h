@@ -13,6 +13,7 @@
 #endif
 
 #include <string>
+#include <vector>
 class Npc
 {
     //State machine states
@@ -35,6 +36,8 @@ class Npc
     unsigned int mId;
     unsigned int mGoal;
     unsigned int mTarget;
+
+    std::vector<unsigned int>mPath;
     
     // Debugger
     unsigned int mTurnCount;
@@ -43,9 +46,6 @@ class Npc
 public :
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
-
-
-
 };
 
 #endif // NPC_H
