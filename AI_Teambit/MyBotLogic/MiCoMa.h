@@ -2,6 +2,7 @@
 #define MICOMA_H
 
 #include "Singleton.h"
+#include "Objective.h"
 
 #include "Logger.h"
 #ifdef _DEBUG

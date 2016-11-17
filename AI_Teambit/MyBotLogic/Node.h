@@ -12,6 +12,33 @@ struct Position
     {}
 };
 
+struct EdgeData
+{
+    enum EdgeType
+    {
+        FREE,
+        WALL,
+        WINDOW,
+        DOOR,
+        DOOR_W
+    } mEdgeType;
+    bool mBlocking;
+    
+    EdgeData()
+        : mEdgeType{ FREE }, mBlocking{ false }
+    {}
+};
+
+struct InfluenceData
+{
+    enum InfluenceType {
+        INFLUENCE_MAP,
+        INFLUENCE_HDOORS
+    };
+
+    float mInfluences[2];
+};
+
 class Node
 {
 public:
@@ -24,110 +51,78 @@ public:
         PRESSURE_PLATE,
         PATH
     };
-    enum EdgeType
-    {
-        FREE,
-        WALL,
-        WINDOW,
-        DOOR,
-        DOOR_W
-    };
 private:
-    Position* m_pos;
-    unsigned int m_ID;
-    NodeType m_type;
-    unsigned int m_edgesCost[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    Node* m_neighboors[8] = {nullptr};
-    unsigned int m_npcId = {0};
-    float m_influence = {0};
-    // TODO - Faire en sorte de definir si on sait tout du node ou pas pour eviter d'aller dessus, pour optimiser la recherche de chemin
-    bool m_knowEverythingAboutIt;
+    Position* mPos;
+    unsigned int mID;
+    NodeType mType;
+    EdgeData mEdges[8]{};
 
-    // TODO - Ajouter une zone a nos nodes pour les differencier et permettre de tout de suite savoir si on peut acceder a ce node ou pas
+
+    Node* mNeighbours[8] = {nullptr};
+    //unsigned int m_npcId = {0};
+
+    InfluenceData mInfluence;
+
+    // TODO - Add zones for tile
+    // TODO - Add close or open attributes
+    //bool m_knowEverythingAboutIt;
+
 public:
-    Node() = delete;
     Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal);
 
     NodeType getType() const noexcept
     {
-        return m_type;
+        return mType;
     }
 
     Position* getPosition() const noexcept
     {
-        return m_pos;
+        return mPos;
     }
 
     unsigned int getId() const noexcept
     {
-        return m_ID;
+        return mID;
     }
 
     void setType(NodeType nType)
     {
-        m_type = nType;
+        mType = nType;
     }
 
-    void setEdgeCost(EDirection dir, int value)
+    void setEdgeCost(const EDirection& dir, const EdgeData::EdgeType& value)
     {
-        m_edgesCost[dir] = value;
+        mEdges[dir].mEdgeType = value;
     }
 
-    bool isEdgeBlocked(EDirection dir) const
+    bool isEdgeBlocked(const EDirection& dir) const
     {
-        return m_edgesCost[dir] == 0 ? false : true;
+        return mEdges[dir].mBlocking;
     }
 
-    void setNeighboor(EDirection dir, Node* p)
+    void setNeighboor(const EDirection& dir, Node* p)
     {
-        m_neighboors[dir] = p;
+        mNeighbours[dir] = p;
     }
 
-    Node* getNeighboor(EDirection dir)
+    Node* getNeighboor(const EDirection& dir)
     {
-        return m_neighboors[dir];
+        return mNeighbours[dir];
     }
 
-    void setNpcIdOnNode(unsigned npcId)
+    EdgeData::EdgeType getEdgeType(const EDirection& dir) const
     {
-        m_npcId = npcId;
+        return static_cast<EdgeData::EdgeType>(mEdges[dir].mEdgeType);
     }
 
-    unsigned getNpcIdOnNode() const
+    float getInfluence(const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP) const
     {
-        return m_npcId;
+        return mInfluence.mInfluences[aType];
     }
 
-    EdgeType getEdge(EDirection dir) const
+    void setInfluence(float inf, const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP)
     {
-        return static_cast<EdgeType>(m_edgesCost[dir]);
-    }
-
-    float getInfluence() const
-    {
-        return m_influence;
-    }
-
-    void setInfluence(float inf)
-    {
-        m_influence = inf;
-    }
-
-    bool knowEverythingAboutThis() const
-    {
-        return m_knowEverythingAboutIt;
-    }
-
-    void setKnowEverything(bool know)
-    {
-        m_knowEverythingAboutIt = know;
-    }
-
-    unsigned int calculateManathan(const Node* goal) const
-    {
-        int x = goal->getPosition()->x - this->m_pos->x;
-        int y = goal->getPosition()->y - this->m_pos->y;
-        return (abs(x) + abs(y)) * 10;
+        mInfluence.mInfluences[aType] = inf;
     }
 };
 
