@@ -20,7 +20,7 @@ void Map::setLoggerPath()
     BOT_LOGIC_MAP_LOG(mLogger, " - - NONE | F - Forbidden | G - Goal | X - Occupied | P - Path | S - Pressure plate \n", true);
     BOT_LOGIC_MAP_LOG(mLoggerInfluence, "Configure", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, "Configure", true);
-    BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - HighWall | 1 - Window \n", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - HighWall | 1 - Window | 2 - Door \n", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - N | 1 - NE | 2 - E | 3 - SE | 4 - S | 5 - SW | 6 - W | 7 - NW \n", true);
 }
 
@@ -57,23 +57,24 @@ void Map::updateEdges(TurnInfo& turnInfo)
         {
             if (info.second.edgesCost[i] == 0)
             {
+                // TODO - Update with new doors in engine
                 if (!info.second.associatedControllers.empty())
                 {
                     if (info.second.objectType == ObjectType_HighWall)
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR", true);
-                        node->setEdgeCost(static_cast<EDirection>(i), Node::DOOR);
+                        node->setEdgeCost(static_cast<EDirection>(i), EdgeData::DOOR);
                     }
                     else if (info.second.objectType == ObjectType_Window)
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", true);
-                        node->setEdgeCost(static_cast<EDirection>(i), Node::DOOR_W);
+                        node->setEdgeCost(static_cast<EDirection>(i), EdgeData::DOOR_W);
                     }
                 }
                 else
                 {
                     BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : " + std::to_string(info.second.objectType), true);
-                    node->setEdgeCost(static_cast<EDirection>(i), info.second.objectType + 1);
+                    node->setEdgeCost(static_cast<EDirection>(i), static_cast<EdgeData::EdgeType>(info.second.objectType + 1));
                 }
             }
         }
@@ -236,33 +237,26 @@ void Map::logMap(unsigned nbTurn)
         for(int col = 0; col < mWidth; ++col)
         {
             Node* tempNode = getNode(currentTileId++);
-            if(tempNode->getNpcIdOnNode() > 0)
+            switch (tempNode->getType())
             {
-                myLog += std::to_string(tempNode->getNpcIdOnNode()) + "----";
-            }
-            else
-            {
-                switch(tempNode->getType())
-                {
-                    case Node::NodeType::NONE:
-                        myLog += "-----";
-                        break;
-                    case Node::NodeType::FORBIDDEN:
-                        myLog += "F----";
-                        break;
-                    case Node::NodeType::GOAL:
-                        myLog += "G----";
-                        break;
-                    case Node::NodeType::OCCUPIED:
-                        myLog += "X----";
-                        break;
-                    case Node::NodeType::PATH:
-                        myLog += "P----";
-                        break;
-                    case Node::NodeType::PRESSURE_PLATE:
-                        myLog += "S----";
-                        break;
-                }
+            case Node::NodeType::NONE:
+                myLog += "-----";
+                break;
+            case Node::NodeType::FORBIDDEN:
+                myLog += "F----";
+                break;
+            case Node::NodeType::GOAL:
+                myLog += "G----";
+                break;
+            case Node::NodeType::OCCUPIED:
+                myLog += "X----";
+                break;
+            case Node::NodeType::PATH:
+                myLog += "P----";
+                break;
+            case Node::NodeType::PRESSURE_PLATE:
+                myLog += "S----";
+                break;
             }
             myLog += "  ";
         }
@@ -291,14 +285,7 @@ void Map::logInfluenceMap(unsigned nbTurn)
         {
             Node* tempNode = getNode(currentTileId++);
             float influ = std::trunc(100 * tempNode->getInfluence()) / 100;
-            if(tempNode->getNpcIdOnNode() > 0)
-            {
-                myLog += std::to_string(tempNode->getNpcIdOnNode()) + "-" + std::to_string(influ);
-            }
-            else
-            {
-                myLog += std::to_string(influ);
-            }
+            myLog += std::to_string(influ);
             myLog += "  ";
         }
         myLog += "\n";

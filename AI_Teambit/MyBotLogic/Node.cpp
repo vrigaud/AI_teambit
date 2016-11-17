@@ -1,6 +1,6 @@
 #include "Node.h"
 
-Node::Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal): m_ID(idVal), m_type(typeVal)
+Node::Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal): mID(idVal), mType(typeVal)
 {
-    m_pos = new Position(xVal, yVal);
+    mPos = new Position(xVal, yVal);
 }
