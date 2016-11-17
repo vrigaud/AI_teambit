@@ -45,6 +45,7 @@ SET( AIBOT_HEADERS
 	MyBotLogic/Map.h
 	MyBotLogic/Node.h
 	MyBotLogic/Singleton.h
+	MyBotLogic/Objective.h
 )
 
 SET( AIBOT_SRC 

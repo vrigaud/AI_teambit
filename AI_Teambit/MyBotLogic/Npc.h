@@ -2,6 +2,7 @@
 #define NPC_H
 
 #include "Logger.h"
+#include "Objective.h"
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_NPC
 #endif
@@ -16,19 +17,30 @@
 #include <vector>
 class Npc
 {
-    //State machine states
+    //Hierarchical state machine states
     enum State
     {
-        TurnStart,			//State machine loop entry point
-        IHaveTargets,		//The npc currently knows of targets on the map
-        IHaveNoTargets,		//The npcs does not know about any target
-        NeedAnotherTarget,	//A npc has the same target as another
-        IHaveSpecificTarget,//The npc will absolutely move towards a target
-        SpecificMove,		//The npc will fill the action list with a move towards its target
-        RandomMove,			//The npc will fill the action list with a semi-random move
-        ReachedTarget,		//The npc reached its target
-        TurnEnd				//State machine loop exit point
+        EXPLORING = 0b00000, 
+            EXPLORE_MAP,
+            EXPLORE_H_DOOR,
+            EXPLORE_DNPC,
+            EXPLORE_WAITING,
+            MOVE,
+        WAITING = 0b01000,
+        MOVING = 0b10000,
+            SEARCH_PATH,
+            FOLLOW_PATH,
+            MOVING_DNPC,
+            MOVING_WAITING,
+            ARRIVED
     };
+    enum StateMask
+    {
+        STATE_LEVEL_0 = 0b11000,
+        STATE_LEVEL_1 = 0b00111
+    };
+
+    Objective mObjective;
 
     State mCurrentState;
     State mNextState;
@@ -43,9 +55,35 @@ class Npc
     unsigned int mTurnCount;
     Logger mLogger;
 
-public :
+public:
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
+    void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
+    {
+        mObjective = Objective{aType, tileId};
+    }
+
+private:
+    void updateState();
+    void enterStateMachine();
+    // Level 0 function for FSM
+    void exploring();
+    void moving();
+    void waiting();
+
+    // Level 1 function for EXPLORING state cluster
+    void exploreMap();
+    void exploreHiddenDoor();
+    inline void exploreWaiting();// Delete ?
+    void exploreDNpc();
+    void move();
+
+    // Level 1 function for MOVING state cluster
+    void searchPath();
+    void followPath();
+    void movingDNpc();
+    inline void movingWaiting(); // Delete ?
+    inline void arrived();
 };
 
 #endif // NPC_H
