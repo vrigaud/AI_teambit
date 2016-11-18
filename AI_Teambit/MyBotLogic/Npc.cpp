@@ -1,7 +1,12 @@
 #include "Npc.h"
 #include "LoggerPath.h"
+#include <set>
+#include <vector>
+
+using namespace std;
+
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
-    : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{}
+    : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{ a_tileId }
 {
 #ifdef BOT_LOGIC_DEBUG_NPC
     mLogger.Init(LoggerPath::getInstance()->getPath(), "Npc_" + std::to_string(mId) + ".log");
@@ -52,6 +57,7 @@ void Npc::enterStateMachine()
         moving();
         break;
     case WAITING:
+        searchPath();
         waiting();
         break;
     }
@@ -60,7 +66,7 @@ void Npc::enterStateMachine()
 void Npc::exploring()
 {
     BOT_LOGIC_NPC_LOG(mLogger, " Exploring", true);
-    do 
+    do
     {
         mCurrentState = mNextState;
         switch (mCurrentState & STATE_LEVEL_1)
@@ -159,7 +165,10 @@ void Npc::move()
 void Npc::searchPath()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-SearchPath", true);
-    // TODO - 
+
+    aStar(mPath.back(), 4);
+
+    // TODO -
 }
 
 void Npc::followPath()
@@ -186,4 +195,83 @@ inline void Npc::arrived()
     BOT_LOGIC_NPC_LOG(mLogger, "-Arrived", true);
     mCurrentState = ARRIVED;
     mNextState = ARRIVED;
+}
+
+void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
+{
+    BOT_LOGIC_NPC_LOG(mLogger, "- aStar", true);
+
+    //We need a clear path whether we fail or not
+    mPath.clear();
+
+    //declarations
+    Node* current{ Map::getInstance()->getNode(startNodeId) };
+    size_t maxNbNode = Map::getInstance()->getHeight() * Map::getInstance()->getWidth();
+
+    multiset<Node*, NodeComparator> openedNodes{};
+    vector<Node*> closedNodes{};
+
+
+    closedNodes.reserve(maxNbNode);
+
+    openedNodes.insert(current);
+
+    while (!openedNodes.empty())
+    {
+        current = *begin(openedNodes);
+
+        openedNodes.erase(current);
+
+        //Success
+        if (current->getId() == goalNodeId)
+        {
+            while (current)
+            {
+                mPath.emplace_back(current->getId());
+                current = current->getParent();
+            }
+            break;
+        }
+
+        for (size_t i{}; i < Node::NBNEIGHBOURS; ++i)
+        {
+            Node* neighbour = current->getNeighboor(static_cast<EDirection>(i));
+
+            if (!neighbour)
+            {
+                continue;
+            }
+
+            int transitionCost = current->getCost() + 1;
+
+            Node* parent = current->getParent();
+
+            if (neighbour->getCost() < 1 || (parent && neighbour->getId() == parent->getId()))
+            {
+                continue;
+            }
+
+            auto testClosed = std::find(begin(closedNodes), end(closedNodes), neighbour);
+            auto testOpened = std::find(begin(openedNodes), end(openedNodes), neighbour);
+
+            if (
+                testClosed != closedNodes.end() && ((*testClosed)->getCost() < transitionCost) ||
+                testOpened != openedNodes.end() && ((*testOpened)->getCost() < transitionCost)
+                )
+            {
+                continue;
+            }
+
+            neighbour->setParent(current);
+
+            neighbour->setCost(transitionCost + current->getCost());
+
+            neighbour->setHeuristic(neighbour->getCost() + Map::getInstance()->calculateDistance(neighbour->getId(), goalNodeId));
+            openedNodes.emplace(neighbour);
+
+        }
+
+        closedNodes.emplace_back(current);
+    }
+    auto lol = 5;
 }

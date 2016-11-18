@@ -47,7 +47,6 @@ private:
     void updateEdges(TurnInfo&);
     void updateTiles(TurnInfo&);
 
-    float calculateDistance(int start, int end);
 
 public:
     static Map *getInstance() noexcept
@@ -86,8 +85,10 @@ public:
     {
         mInfluenceRange = range;
     }
-    void setLoggerPath();
 
+    unsigned int calculateDistance(int start, int end);
+    
+    void setLoggerPath();
     void logMap(unsigned);
     void logInfluenceMap(unsigned nbTurn);
 };
