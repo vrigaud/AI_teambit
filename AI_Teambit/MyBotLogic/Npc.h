@@ -91,6 +91,8 @@ private:
     void movingDNpc();
     inline void movingWaiting(); // Delete ?
     inline void arrived();
+    
+    void aStar(unsigned int, unsigned int);
 };
 
 #endif // NPC_H

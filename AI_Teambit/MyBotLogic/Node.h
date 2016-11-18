@@ -1,8 +1,8 @@
 #ifndef NODE_HEADER
 #define NODE_HEADER
 #include <cmath>
-#include <limits>
 #include "Globals.h"
+
 
 struct Position
 {
@@ -52,18 +52,23 @@ public:
         PRESSURE_PLATE,
         PATH
     };
+    
+    enum { NBNEIGHBOURS = 8 };
 
 private:
+
+
     Position* mPos;
     unsigned int mID;
     NodeType mType;
     EdgeData mEdges[8]{};
     Node* mParent;
 
-    int mCost{ std::numeric_limits<int>::max() };
+    int mCost{ 1 };
     unsigned int mHeuristic{};
 
-    Node* mNeighbours[8] = { nullptr };
+    
+    Node* mNeighbours[NBNEIGHBOURS] = { nullptr };
     //unsigned int m_npcId = {0};
 
     InfluenceData mInfluence;
@@ -165,14 +170,9 @@ public:
 
 struct NodeComparator
 {
-    bool operator() (const Node* ft0, const Node* ft1) const
+    bool operator() (const Node* n0, const Node* n1) const
     {
-
-        /*
-        TODO
-        Compare costs, not ids :P
-        */
-        return ft0->getId() < ft1->getId();
+         return n0->getHeuristic() < n1->getHeuristic();
     }
 };
 
