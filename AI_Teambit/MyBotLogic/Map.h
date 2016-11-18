@@ -3,13 +3,13 @@
 
 #include "Node.h"
 #include "Globals.h"
-#include <map>
-#include <vector>
 #include "Singleton.h"
 #include "NPCInfo.h"
 
 #include "Logger.h"
 #include <algorithm>
+#include <map>
+#include <vector>
 
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_MAP
@@ -29,9 +29,13 @@ class Map : Singleton
     static Map mInstance;
     unsigned int mWidth;
     unsigned int mHeight;
-    unsigned int mInfluenceRange;
+
     std::vector<Node*> mNodeMap;
     std::vector<unsigned int> mGoalTiles;
+	unsigned int mInfluenceRange;
+
+	std::map<unsigned, bool> mSeenTiles;
+	std::vector<Node*> mInterestingNodes;
 
     // Log stuff
     Logger mLogger;
@@ -58,8 +62,11 @@ public:
     void initMap(int, int, int = 0);
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
-    
-    Node* getNode(unsigned int, unsigned int);
+	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
+
+	void propagateInfluence();
+	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
+	Node* getNode(unsigned int, unsigned int);
     Node* getNode(unsigned int);
     void setNodeType(unsigned int, Node::NodeType);
     unsigned int getWidth() const
@@ -86,6 +93,7 @@ public:
     {
         mInfluenceRange = range;
     }
+	void addSeenTile(unsigned tileId);
     void setLoggerPath();
 
     void logMap(unsigned);
