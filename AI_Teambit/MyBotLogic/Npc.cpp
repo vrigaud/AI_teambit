@@ -1,5 +1,9 @@
 #include "Npc.h"
 #include "LoggerPath.h"
+
+#include "Map.h"
+
+
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
     : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{}
 {
@@ -16,7 +20,6 @@ void Npc::update()
     updateState();
     enterStateMachine();
 }
-
 
 void Npc::updateState()
 {
@@ -59,7 +62,7 @@ void Npc::enterStateMachine()
 
 void Npc::exploring()
 {
-    BOT_LOGIC_NPC_LOG(mLogger, " Exploring", true);
+    BOT_LOGIC_NPC_LOG(mLogger, " Exploring", false);
     do 
     {
         mCurrentState = mNextState;
@@ -86,7 +89,7 @@ void Npc::exploring()
 
 void Npc::moving()
 {
-    BOT_LOGIC_NPC_LOG(mLogger, " Moving", true);
+    BOT_LOGIC_NPC_LOG(mLogger, " Moving", false);
     // TODO - moving fsm
     do
     {
@@ -125,7 +128,40 @@ void Npc::waiting()
 void Npc::exploreMap()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
-    // TODO - pull influence tile
+    
+    Map* map = Map::getInstance();
+    std::vector<unsigned int> v = Map::get()->getNearInfluencedTile(getCurrentTileId());
+
+    if (v.size() <= 0)
+    {
+        std::vector<unsigned> nonVisitedTiles = Map::get()->getNonVisitedTile();
+        DisplayVector("\t-Looking for the non visited tiles : ", nonVisitedTiles);
+        for (unsigned index : nonVisitedTiles)
+        {
+            std::vector<unsigned> temp = Map::get()->getNpcPath(getCurrentTileId(), index, { Node::NodeType::FORBIDDEN, Node::NodeType::NONE });
+            if (!temp.empty())
+            {
+                m_path = temp;
+                m_target = index;
+                m_nextState = MOVING;
+                break;
+            }
+        }
+    }
+    else
+    {
+        unsigned int tileId = v[0];
+
+        m_path = { tileId, getCurrentTileId() };
+        m_historyTiles.push_back(tileId);
+
+        m_nextActions.push_back(new Move{ m_id, Map::get()->getNextDirection(getCurrentTileId(), getNextPathTile()) });
+        Map::get()->visitTile(tileId);
+
+        BOT_LOGIC_NPC_LOG(m_logger, "Deplacement vers " + std::to_string(tileId), true);
+
+        m_nextState = EXPLORING;
+    }
 }
 
 void Npc::exploreHiddenDoor()

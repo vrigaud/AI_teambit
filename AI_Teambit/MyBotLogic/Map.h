@@ -74,10 +74,13 @@ public:
     void initMap(int, int, int = 0);
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
+    const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
 
+    // Influence methods
 	void propagateInfluence();
 	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
+
 	Node* getNode(unsigned int, unsigned int);
     Node* getNode(unsigned int);
     void setNodeType(unsigned int, Node::NodeType);
