@@ -1,6 +1,7 @@
 #ifndef NODE_HEADER
 #define NODE_HEADER
 #include <cmath>
+#include <limits>
 #include "Globals.h"
 
 struct Position
@@ -8,7 +9,7 @@ struct Position
     int x;
     int y;
     Position(int xVal, int yVal)
-        :x{xVal}, y{yVal}
+        :x{ xVal }, y{ yVal }
     {}
 };
 
@@ -23,7 +24,7 @@ struct EdgeData
         DOOR_W
     } mEdgeType;
     bool mBlocking;
-    
+
     EdgeData()
         : mEdgeType{ FREE }, mBlocking{ false }
     {}
@@ -51,14 +52,18 @@ public:
         PRESSURE_PLATE,
         PATH
     };
+
 private:
     Position* mPos;
     unsigned int mID;
     NodeType mType;
     EdgeData mEdges[8]{};
+    Node* mParent;
 
+    int mCost{ std::numeric_limits<int>::max() };
+    unsigned int mHeuristic{};
 
-    Node* mNeighbours[8] = {nullptr};
+    Node* mNeighbours[8] = { nullptr };
     //unsigned int m_npcId = {0};
 
     InfluenceData mInfluence;
@@ -68,7 +73,29 @@ private:
     //bool m_knowEverythingAboutIt;
 
 public:
+
     Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal);
+
+
+    int getCost() const noexcept
+    {
+        return mCost;
+    }
+
+    void setCost(const int cost)
+    {
+        mCost = cost;
+    }
+
+    unsigned int getHeuristic() const noexcept
+    {
+        return mHeuristic;
+    }
+
+    void setHeuristic(unsigned int heuristic)
+    {
+        mHeuristic = heuristic;
+    }
 
     NodeType getType() const noexcept
     {
@@ -123,6 +150,29 @@ public:
     void setInfluence(float inf, const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP)
     {
         mInfluence.mInfluences[aType] = inf;
+    }
+
+    void setParent(Node* parent)
+    {
+        mParent = parent;
+    }
+
+    Node* getParent() const noexcept
+    {
+        return mParent;
+    }
+};
+
+struct NodeComparator
+{
+    bool operator() (const Node* ft0, const Node* ft1) const
+    {
+
+        /*
+        TODO
+        Compare costs, not ids :P
+        */
+        return ft0->getId() < ft1->getId();
     }
 };
 

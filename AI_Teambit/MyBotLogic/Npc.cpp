@@ -1,5 +1,10 @@
 #include "Npc.h"
 #include "LoggerPath.h"
+#include <set>
+#include <vector>
+
+using namespace std;
+
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
     : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{}
 {
@@ -60,7 +65,7 @@ void Npc::enterStateMachine()
 void Npc::exploring()
 {
     BOT_LOGIC_NPC_LOG(mLogger, " Exploring", true);
-    do 
+    do
     {
         mCurrentState = mNextState;
         switch (mCurrentState & STATE_LEVEL_1)
@@ -159,7 +164,70 @@ void Npc::move()
 void Npc::searchPath()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-SearchPath", true);
-    // TODO - 
+
+    //declarations
+    Node* current{ Map::getInstance()->getNode(mId) };
+    size_t maxNbNode = Map::getInstance()->getHeight() * Map::getInstance()->getWidth();
+
+    multiset<Node*, NodeComparator> openedNodes{};
+    vector<Node*> closedNodes{};
+
+
+
+    closedNodes.reserve(maxNbNode);
+
+    openedNodes.insert(current);
+
+    while (!openedNodes.empty())
+    {
+        current = *begin(openedNodes);
+
+        openedNodes.erase(current);
+        closedNodes.emplace_back(current); //TODO check the complexity of emplace_back vs emplace
+
+        if (current->getId() == mGoal)
+        {
+            //TODO MakePath or something like that...
+            break;
+        }
+
+        for (size_t i{}; i < 8; ++i) //TODO add constant
+        {
+            Node* neighbour = current->getNeighboor(static_cast<EDirection>(i));
+            int transitionCost = neighbour->getCost();
+
+            if (transitionCost < 1 || neighbour->getId() == current->getId())
+            {
+                continue;
+            }
+
+            neighbour->setParent(current);
+
+            auto testClosed = std::find(begin(closedNodes), end(closedNodes), neighbour);
+            auto testOpened = std::find(begin(openedNodes), end(openedNodes), neighbour);
+
+            if (
+                testClosed != closedNodes.end() && ((*testClosed)->getCost() < transitionCost) ||
+                testOpened != openedNodes.end() && ((*testOpened)->getCost() < transitionCost)
+                )
+            {
+                continue;
+            }
+            else
+            {
+                neighbour->setCost(transitionCost + current->getCost());
+
+                /*
+                TODO
+                MANHATTAN DISTANCE
+                */
+                neighbour->setHeuristic(neighbour->getCost()); // PLUS HEURISTIC
+                openedNodes.emplace(neighbour);
+            }
+        }
+
+
+    }
 }
 
 void Npc::followPath()
