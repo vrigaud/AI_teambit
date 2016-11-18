@@ -127,38 +127,41 @@ void Map::propagate(Node* myNode, unsigned curDist, unsigned maxDist, float init
     }
 }
 
-// return the first best influente tile or no tile if all tile have the same influence
+// return the first best influente tile return empty vector if no tile have influence
 std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) const
 {
-    //Node * current = getNode(tileId);
-    //std::vector<unsigned int> returnVector;
+    Node * current = getNode(tileId);
+    std::vector<unsigned int> returnVector;
 
-    //float bestInflu = 0.0f;
-    //unsigned bestTile;
+    float bestInflu = 0.0f;
+    int bestTile = -1;
     //unsigned int counterTileMax{};
     //unsigned int counterTileBestInflu{};
-    //for (int i = N; i <= NW; ++i)
-    //{
-    //    if (current->isEdgeBlocked(static_cast<EDirection>(i)))
-    //    { // No need to process inaccessible tile
-    //        continue;
-    //    }
-    //    Node* neighboor = current->getNeighbour(static_cast<EDirection>(i));
-    //    if (neighboor && neighboor->getType()!= Node::FORBIDDEN)
-    //    { // neighboor is existing and autorized and accessible
-    //        ++counterTileMax;
-    //        float nodeinf = neighboor->getInfluence();
-    //        if (nodeinf > 0.0f)
-    //        {
-    //            if (bestInflu < nodeinf)
-    //            {
-    //                bestInflu = nodeinf;
-    //                bestTile = neighboor->getId();
-    //            }
-    //        }
-    //    }
-    //}
-    //return returnVector;
+    for (int i = N; i <= NW; ++i)
+    {
+        if (current->isEdgeBlocked(static_cast<EDirection>(i)))
+        { // No need to process inaccessible tile
+            continue;
+        }
+        Node* neighboor = current->getNeighbour(static_cast<EDirection>(i));
+        if (neighboor && neighboor->getType() != Node::FORBIDDEN)
+        { // neighboor is existing and autorized and accessible
+            //++counterTileMax;
+            float nodeinf = neighboor->getInfluence();
+
+            if (bestInflu < nodeinf)
+            {// Update new best infl
+                bestInflu = nodeinf;
+                bestTile = neighboor->getId();
+                //++counterTileBestInflu;
+            }
+        }
+    }
+    if (bestTile >= 0)
+    {
+        returnVector.emplace_back(bestTile);
+    }
+    return returnVector;
 }
 
 void Map::updateMap(TurnInfo& turnInfo)
@@ -265,7 +268,7 @@ void Map::updateTiles(TurnInfo& turnInfo)
 
 void Map::addSeenTile(unsigned tileId)
 {
-    if (mKnownTilesAndVisitedStatus[tileId]) 
+    if (mKnownTilesAndVisitedStatus[tileId])
     {   // no need to update cause tile already visited
         return;
     }
