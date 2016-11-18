@@ -23,9 +23,10 @@ struct EdgeData
         DOOR_W
     } mEdgeType;
     bool mBlocking;
+    bool mOpen;
     
     EdgeData()
-        : mEdgeType{ FREE }, mBlocking{ false }
+        : mEdgeType{ FREE }, mBlocking{ false }, mOpen{ false }
     {}
 };
 
@@ -37,6 +38,10 @@ struct InfluenceData
     };
 
     float mInfluences[2];
+
+    InfluenceData()
+        : mInfluences{ 0.0f, 0.0f }
+    {}
 };
 
 class Node
@@ -90,22 +95,38 @@ public:
         mType = nType;
     }
 
-    void setEdgeCost(const EDirection& dir, const EdgeData::EdgeType& value)
+    void setEdgeType(const EDirection& dir, const EdgeData::EdgeType& value)
     {
+        if (value != EdgeData::FREE)
+        {
+            mEdges[dir].mBlocking = true;
+            mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mBlocking = true;
+        }
         mEdges[dir].mEdgeType = value;
+    }
+
+    void setDoorState(const EDirection& dir, bool value)
+    {
+        mEdges[dir].mOpen = value;
+        mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mOpen = value;
+    }
+
+    bool isDoorOpen(const EDirection& dir)
+    {
+        return mEdges[dir].mOpen;
     }
 
     bool isEdgeBlocked(const EDirection& dir) const
     {
-        return mEdges[dir].mBlocking;
+        return mEdges[dir].mBlocking && !mEdges[dir].mOpen;
     }
 
-    void setNeighboor(const EDirection& dir, Node* p)
+    void setNeighbour(const EDirection& dir, Node* p)
     {
         mNeighbours[dir] = p;
     }
 
-    Node* getNeighboor(const EDirection& dir)
+    Node* getNeighbour(const EDirection& dir)
     {
         return mNeighbours[dir];
     }

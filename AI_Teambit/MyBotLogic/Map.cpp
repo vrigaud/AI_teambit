@@ -18,7 +18,7 @@ void Map::setLoggerPath()
 
     BOT_LOGIC_MAP_LOG(mLogger, "Configure", true);
     BOT_LOGIC_MAP_LOG(mLogger, " - - NONE | F - Forbidden | G - Goal | X - Occupied | P - Path | S - Pressure plate \n", true);
-    BOT_LOGIC_MAP_LOG(mLoggerInfluence, "Configure", true);
+    BOT_LOGIC_MAP_LOG(mLoggerInfluence, "Configure : ", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, "Configure", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - HighWall | 1 - Window | 2 - Door \n", true);
     BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - N | 1 - NE | 2 - E | 3 - SE | 4 - S | 5 - SW | 6 - W | 7 - NW \n", true);
@@ -41,99 +41,90 @@ void Map::initMap(int height, int width, int visionRange)
     connectNodes();
 }
 
+
+// find influent tiles and set their base influence
 void Map::createInfluenceMap(const InfluenceData::InfluenceType& aType)
 {
-	mInterestingNodes.clear();
-	for (auto node : mSeenTiles)
-	{
-		Node* myNode = getNode(node.first);
-		myNode->setInfluence(0.0f);
-		if (!node.second)
-		{
-			float tempInflu = 0.0f;
+    mInterestingNodes.clear();
+    for (auto node : mKnownTilesAndVisitedStatus)
+    {
+        Node* myNode = getNode(node.first);
+        myNode->setInfluence(0.0f);
+        if (!node.second)
+        {
+            float tempInflu = 0.0f;
 
-			//TODO : [REFACTO] mergeable loops ?
-			for (int i = N; i <= NW; ++i)
-			{
-				EDirection dir = static_cast<EDirection>(i);
-				EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
+            //TODO : [REFACTO] mergeable loops ?
+            for (int i = N; i <= NW; ++i)
+            {
+                EDirection dir = static_cast<EDirection>(i);
+                EDirection invDir = inverseDirection(dir);
+                EdgeData::EdgeType edgeType = myNode->getEdgeType(dir);
+                Node* neighbour = myNode->getNeighbour(dir);
+                EdgeData::EdgeType edgeNeibType = EdgeData::FREE;
+                if (neighbour != nullptr)
+                {
+                    edgeNeibType = neighbour->getEdgeType(invDir);
+                    if (neighbour->getType() == Node::NONE && !myNode->isEdgeBlocked(dir))
+                    {
+                        neighbour->setInfluence(1.0f);
+                        mInterestingNodes.push_back(neighbour);
+                    }
+                }
+                if (edgeType == EdgeData::WINDOW || edgeType == EdgeData::DOOR_W
+                    || edgeNeibType == EdgeData::WINDOW || edgeNeibType == EdgeData::DOOR_W)
+                {
+                    tempInflu += 1.0f;
+                }
+            }
+            if (tempInflu > 0.0f)
+            {
+                myNode->setInfluence(tempInflu);
+                mInterestingNodes.push_back(myNode);
+            }
+        }
+    }
 
-				EdgeData::EdgeType edgeType = myNode->getEdgeType(dir);
-				Node* tempNode = myNode->getNeighboor(dir);
-				EdgeData::EdgeType edgeNeibType = EdgeData::FREE;
-				if (tempNode != nullptr)
-				{
-					edgeNeibType = tempNode->getEdgeType(invDir);
-				}
-				if (edgeType == EdgeData::WINDOW || edgeNeibType == EdgeData::WINDOW)
-				{
-					tempInflu += 1.0f;
-				}
-			}
-
-			for (int i = N; i <= NW; ++i)
-			{
-				EDirection dir = static_cast<EDirection>(i);
-				EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-
-				Node* tempNode = myNode->getNeighboor(dir);
-				if (tempNode != nullptr && (!myNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
-				{
-					if (tempNode->getType() == Node::NONE)
-					{
-						tempNode->setInfluence(1.0f);
-						mInterestingNodes.push_back(tempNode);
-					}
-				}
-			}
-			if (tempInflu > 0.0f)
-			{
-				myNode->setInfluence(tempInflu);
-				mInterestingNodes.push_back(myNode);
-			}
-		}
-	}
-
-	std::sort(begin(mInterestingNodes), end(mInterestingNodes), [](const Node* a, const Node* b) {
-		return a->getInfluence() > b->getInfluence();
-	});
-	propagateInfluence();
+    std::sort(begin(mInterestingNodes), end(mInterestingNodes), [](const Node* a, const Node* b) {
+        return a->getInfluence() > b->getInfluence();
+    });
+    propagateInfluence();
 
 }
 
 void Map::propagateInfluence()
 {
-	unsigned maxDist = getInfluenceRange();
-	for (auto node : mInterestingNodes)
-	{
-		propagate(node, 0, maxDist, node->getInfluence());
-	}
+    unsigned maxDist = getInfluenceRange();
+    for (auto node : mInterestingNodes)
+    {
+        propagate(node, 0, maxDist, node->getInfluence());
+    }
 }
 
 void Map::propagate(Node* myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const
 {
-	if (curDist > maxDist)
-	{
-		return;
-	}
-	for (int i = N; i <= NW; ++i)
-	{
-		EDirection dir = static_cast<EDirection>(i);
-		EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-		Node* tempNode = myNode->getNeighboor(dir);
-		if (tempNode != nullptr && (!myNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
-		{
-			if (tempNode->getType() == Node::PATH)
-			{
-				auto newInfluence = myNode->getInfluence() - (initialInfluence / getInfluenceRange());
-				if (newInfluence > tempNode->getInfluence())
-				{
-					tempNode->setInfluence(newInfluence);
-				}
-				propagate(tempNode, ++curDist, maxDist, initialInfluence);
-			}
-		}
-	}
+    if (curDist > maxDist)
+    {
+        return;
+    }
+    for (int i = N; i <= NW; ++i)
+    {
+        EDirection dir = static_cast<EDirection>(i);
+        EDirection invDir = inverseDirection(dir);
+        Node* tempNode = myNode->getNeighbour(dir);
+        if (tempNode != nullptr && (!myNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
+        {
+            if (tempNode->getType() == Node::PATH)
+            {
+                auto newInfluence = myNode->getInfluence() - (initialInfluence / getInfluenceRange());
+                if (newInfluence > tempNode->getInfluence())
+                {
+                    tempNode->setInfluence(newInfluence);
+                }
+                propagate(tempNode, ++curDist, maxDist, initialInfluence);
+            }
+        }
+    }
 }
 
 void Map::updateMap(TurnInfo& turnInfo)
@@ -141,9 +132,9 @@ void Map::updateMap(TurnInfo& turnInfo)
     updateTiles(turnInfo);
     updateEdges(turnInfo);
 
-	//Test
-	createInfluenceMap();
-	logInfluenceMap(turnInfo.turnNb);
+    //Test
+    createInfluenceMap();
+    logInfluenceMap(turnInfo.turnNb);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
@@ -154,42 +145,67 @@ void Map::updateEdges(TurnInfo& turnInfo)
         Node* node = getNode(info.second.tileID);
         for (int i = N; i <= NW; ++i)
         {
+            ObjectInfo object = info.second;
             if (info.second.edgesCost[i] == 0)
             {
-                // TODO - Update with new doors in engine
-                if (!info.second.associatedControllers.empty())
+                auto typeHighWall = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_HighWall);
+                if (typeHighWall != end(object.objectTypes))
                 {
-                    if (info.second.objectType == ObjectType_HighWall)
+                    node->setEdgeType(static_cast<EDirection>(i), EdgeData::WALL);
+                    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WALL", true);
+                    continue;
+                }
+
+                auto typeWindow = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_Window);
+                auto typeDoor = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_Door);
+                if (typeWindow != end(object.objectTypes))
+                {
+                    if (typeDoor != end(object.objectTypes))
                     {
-                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR", true);
-                        node->setEdgeCost(static_cast<EDirection>(i), EdgeData::DOOR);
+                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
+                        node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
+                        processDoorState(object, node, i);
                     }
-                    else if (info.second.objectType == ObjectType_Window)
+                    else
                     {
-                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", true);
-                        node->setEdgeCost(static_cast<EDirection>(i), EdgeData::DOOR_W);
+                        BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WINDOW", true);
+                        node->setEdgeType(static_cast<EDirection>(i), EdgeData::WINDOW);
                     }
                 }
-                else
+                else if (typeDoor != end(object.objectTypes))
                 {
-                    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : " + std::to_string(info.second.objectType), true);
-                    node->setEdgeCost(static_cast<EDirection>(i), static_cast<EdgeData::EdgeType>(info.second.objectType + 1));
+                    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR", false);
+                    node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR);
+                    processDoorState(object, node, i);
                 }
             }
         }
     }
 }
 
+void Map::processDoorState(ObjectInfo &object, Node* node, int i)
+{
+    auto openDoor = find(begin(object.objectStates), end(object.objectStates), ObjectState_Opened);
+    if (openDoor != end(object.objectStates))
+    {
+
+        BOT_LOGIC_MAP_LOG(mLoggerEdges, " open", true);
+        node->setDoorState(static_cast<EDirection>(i), true);
+    }
+    else
+    {
+        BOT_LOGIC_MAP_LOG(mLoggerEdges, " close", true);
+        node->setDoorState(static_cast<EDirection>(i), false);
+    }
+}
+
 void Map::updateTiles(TurnInfo& turnInfo)
 {
-    for(auto info : turnInfo.tiles)
+    for (auto info : turnInfo.tiles)
     {
         auto tileInfo = info.second;
 
-//        auto ITisForbidden = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden);
-//        auto ITisTarget = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target);
-//        auto ITisDescriptor = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Descriptor);
-//        auto ITisPressurePlate = find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_PressurePlate);
+        //        
         if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::FORBIDDEN);
@@ -198,28 +214,28 @@ void Map::updateTiles(TurnInfo& turnInfo)
         {
             setNodeType(tileInfo.tileID, Node::GOAL);
             addGoalTile(tileInfo.tileID);
-			addSeenTile(tileInfo.tileID);
+            addSeenTile(tileInfo.tileID);
         }
         else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_PressurePlate) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::PRESSURE_PLATE);
-			addSeenTile(tileInfo.tileID);
+            addSeenTile(tileInfo.tileID);
         }
         else
         {
             setNodeType(tileInfo.tileID, Node::PATH);
-			addSeenTile(tileInfo.tileID);
+            addSeenTile(tileInfo.tileID);
         }
     }
 }
 
 void Map::addSeenTile(unsigned tileId)
 {
-	if (mSeenTiles[tileId])
-	{
-		return;
-	}
-	mSeenTiles[tileId] = false;
+    if (mKnownTilesAndVisitedStatus[tileId]) 
+    {   // no need to update cause tile already visited
+        return;
+    }
+    mKnownTilesAndVisitedStatus[tileId] = false; // Add unvisited tile to known tiles
 }
 
 void Map::createNode(Node* node)
@@ -229,7 +245,7 @@ void Map::createNode(Node* node)
 
 void Map::connectNodes()
 {
-    for(Node* curNode : mNodeMap)
+    for (Node* curNode : mNodeMap)
     {
         // connecting
         Node* nw;
@@ -238,7 +254,7 @@ void Map::connectNodes()
         Node* se;
         Node* sw;
         Node* w;
-        if(curNode->getPosition()->y % 2 == 0)
+        if (curNode->getPosition()->y % 2 == 0)
         {
             nw = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y - 1);
             ne = getNode(curNode->getPosition()->x, curNode->getPosition()->y - 1);
@@ -256,12 +272,12 @@ void Map::connectNodes()
             sw = getNode(curNode->getPosition()->x, curNode->getPosition()->y + 1);
             w = getNode(curNode->getPosition()->x - 1, curNode->getPosition()->y);
         }
-        curNode->setNeighboor(NW, nw);
-        curNode->setNeighboor(NE, ne);
-        curNode->setNeighboor(E, e);
-        curNode->setNeighboor(SE, se);
-        curNode->setNeighboor(SW, sw);
-        curNode->setNeighboor(W, w);
+        curNode->setNeighbour(NW, nw);
+        curNode->setNeighbour(NE, ne);
+        curNode->setNeighbour(E, e);
+        curNode->setNeighbour(SE, se);
+        curNode->setNeighbour(SW, sw);
+        curNode->setNeighbour(W, w);
     }
 }
 
@@ -272,7 +288,7 @@ void Map::setNodeType(unsigned int tileId, Node::NodeType tileType)
 
 Node* Map::getNode(unsigned int x, unsigned int y)
 {
-    if(x < 0 || x > getWidth() - 1 || y < 0 || y > getHeight() - 1)
+    if (x < 0 || x > getWidth() - 1 || y < 0 || y > getHeight() - 1)
     {
         return nullptr;
     }
@@ -301,23 +317,23 @@ float Map::calculateDistance(int indexStart, int indexEnd)
 
 void Map::addGoalTile(unsigned int number)
 {
-    if(std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))
+    if (std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))
     {
         bool canAccessTile = false;
         Node* currentNode = getNode(number);
 
-        for(int i = N; i <= NW; ++i)
+        for (int i = N; i <= NW; ++i)
         {
             EDirection dir = static_cast<EDirection>(i);
-            EDirection invDir = static_cast<EDirection>((dir + 4) % 8);
-            Node* tempNode = currentNode->getNeighboor(dir);
-            if(tempNode != nullptr && (!currentNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
+            EDirection invDir = inverseDirection(dir);
+            Node* tempNode = currentNode->getNeighbour(dir);
+            if (tempNode != nullptr && (!currentNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
             {
                 canAccessTile = true;
             }
         }
 
-        if(canAccessTile)
+        if (canAccessTile)
         {
             mGoalTiles.push_back(number);
         }
@@ -339,13 +355,13 @@ void Map::logMap(unsigned nbTurn)
     // Printing the map
     myLog += "Map : \n";
     unsigned int currentTileId{};
-    for(int row = 0; row < mHeight; ++row)
+    for (int row = 0; row < mHeight; ++row)
     {
-        if(row % 2)
+        if (row % 2)
         {
             myLog += "   ";
         }
-        for(int col = 0; col < mWidth; ++col)
+        for (int col = 0; col < mWidth; ++col)
         {
             Node* tempNode = getNode(currentTileId++);
             switch (tempNode->getType())
@@ -387,13 +403,13 @@ void Map::logInfluenceMap(unsigned nbTurn)
     // Printing the map
     myLog += "Map : \n";
     unsigned int currentTileId{};
-    for(int row = 0; row < mHeight; ++row)
+    for (int row = 0; row < mHeight; ++row)
     {
-        if(row % 2)
+        if (row % 2)
         {
             myLog += "   ";
         }
-        for(int col = 0; col < mWidth; ++col)
+        for (int col = 0; col < mWidth; ++col)
         {
             Node* tempNode = getNode(currentTileId++);
             float influ = std::trunc(100 * tempNode->getInfluence()) / 100;

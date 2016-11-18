@@ -11,6 +11,9 @@
 #include <map>
 #include <vector>
 
+// For debug only
+#include <string>
+
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_MAP
 #endif
@@ -22,6 +25,7 @@
 #endif
 
 struct TileInfo;
+struct ObjectInfo;
 struct TurnInfo;
 
 class Map : Singleton
@@ -34,7 +38,7 @@ class Map : Singleton
     std::vector<unsigned int> mGoalTiles;
 	unsigned int mInfluenceRange;
 
-	std::map<unsigned, bool> mSeenTiles;
+	std::map<unsigned, bool> mKnownTilesAndVisitedStatus;
 	std::vector<Node*> mInterestingNodes;
 
     // Log stuff
@@ -50,6 +54,14 @@ private:
     void connectNodes();
     void updateEdges(TurnInfo&);
     void updateTiles(TurnInfo&);
+
+    // Edges update 
+    void processDoorState(ObjectInfo &object, Node* node, int i);
+
+    EDirection inverseDirection(const EDirection& dir) const
+    {
+        return static_cast<EDirection>((dir + 4) % 8);
+    }
 
     float calculateDistance(int start, int end);
 
@@ -91,6 +103,7 @@ public:
     }
     void setInfluenceRange(unsigned int range)
     {
+        BOT_LOGIC_MAP_LOG(mLoggerInfluence, "\t Influence Range = " + std::to_string(range), true);
         mInfluenceRange = range;
     }
 	void addSeenTile(unsigned tileId);

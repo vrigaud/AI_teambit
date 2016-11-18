@@ -64,8 +64,8 @@ SET( AIBOT_SRC
 	MyBotLogic/Map.cpp
 	MyBotLogic/Node.cpp
 	MyBotLogic/MiCoMa.cpp
-	MyBotLogic/Npc.cpp
-	
+	MyBotLogic/Npc.cpp	
+
 	#Main
 	Main.cpp
 )
