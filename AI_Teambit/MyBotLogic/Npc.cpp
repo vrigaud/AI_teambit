@@ -130,38 +130,7 @@ void Npc::exploreMap()
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
     
     Map* map = Map::getInstance();
-    std::vector<unsigned int> v = Map::get()->getNearInfluencedTile(getCurrentTileId());
-
-    if (v.size() <= 0)
-    {
-        std::vector<unsigned> nonVisitedTiles = Map::get()->getNonVisitedTile();
-        DisplayVector("\t-Looking for the non visited tiles : ", nonVisitedTiles);
-        for (unsigned index : nonVisitedTiles)
-        {
-            std::vector<unsigned> temp = Map::get()->getNpcPath(getCurrentTileId(), index, { Node::NodeType::FORBIDDEN, Node::NodeType::NONE });
-            if (!temp.empty())
-            {
-                m_path = temp;
-                m_target = index;
-                m_nextState = MOVING;
-                break;
-            }
-        }
-    }
-    else
-    {
-        unsigned int tileId = v[0];
-
-        m_path = { tileId, getCurrentTileId() };
-        m_historyTiles.push_back(tileId);
-
-        m_nextActions.push_back(new Move{ m_id, Map::get()->getNextDirection(getCurrentTileId(), getNextPathTile()) });
-        Map::get()->visitTile(tileId);
-
-        BOT_LOGIC_NPC_LOG(m_logger, "Deplacement vers " + std::to_string(tileId), true);
-
-        m_nextState = EXPLORING;
-    }
+    //std::vector<unsigned int> v = map->get;
 }
 
 void Npc::exploreHiddenDoor()
@@ -222,4 +191,16 @@ inline void Npc::arrived()
     BOT_LOGIC_NPC_LOG(mLogger, "-Arrived", true);
     mCurrentState = ARRIVED;
     mNextState = ARRIVED;
+}
+
+
+template<class T>
+void Npc::DisplayVector(std::string info, const std::vector<T> v)
+{
+    std::string s{ "" };
+    for (T u : v)
+    {
+        s += std::to_string(u) + " ";
+    }
+    BOT_LOGIC_NPC_LOG(mLogger, info + s, true);
 }

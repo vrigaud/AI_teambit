@@ -100,7 +100,10 @@ public:
         if (value != EdgeData::FREE)
         {
             mEdges[dir].mBlocking = true;
-            mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mBlocking = true;
+            if (mNeighbours[dir])
+            {
+                mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mBlocking = true;
+            }
         }
         mEdges[dir].mEdgeType = value;
     }
@@ -108,7 +111,10 @@ public:
     void setDoorState(const EDirection& dir, bool value)
     {
         mEdges[dir].mOpen = value;
-        mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mOpen = value;
+        if (mNeighbours[dir])
+        {
+            mNeighbours[dir]->mEdges[static_cast<EDirection>((dir + 4) % 8)].mOpen = value;
+        }
     }
 
     bool isDoorOpen(const EDirection& dir)

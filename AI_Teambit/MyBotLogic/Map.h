@@ -80,9 +80,10 @@ public:
     // Influence methods
 	void propagateInfluence();
 	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
+    std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
 
-	Node* getNode(unsigned int, unsigned int);
-    Node* getNode(unsigned int);
+	Node* getNode(unsigned int, unsigned int) const;
+    Node* getNode(unsigned int) const;
     void setNodeType(unsigned int, Node::NodeType);
     unsigned int getWidth() const
     {

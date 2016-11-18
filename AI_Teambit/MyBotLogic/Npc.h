@@ -63,6 +63,10 @@ public:
         mObjective = Objective{aType, tileId};
     }
 
+    // Debug Mission
+    template<class T>
+    void DisplayVector(std::string, const std::vector<T>);
+
 private:
     void updateState();
     void enterStateMachine();
