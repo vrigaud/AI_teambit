@@ -364,7 +364,7 @@ void Map::addGoalTile(unsigned int number)
             EDirection dir = static_cast<EDirection>(i);
             EDirection invDir = inverseDirection(dir);
             Node* tempNode = currentNode->getNeighbour(dir);
-            if (tempNode != nullptr && (!currentNode->isEdgeBlocked(dir) && !tempNode->isEdgeBlocked(invDir)))
+            if (tempNode != nullptr && !currentNode->isEdgeBlocked(dir))
             {
                 canAccessTile = true;
             }
