@@ -130,35 +130,35 @@ void Map::propagate(Node* myNode, unsigned curDist, unsigned maxDist, float init
 // return the first best influente tile or no tile if all tile have the same influence
 std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) const
 {
-    Node * current = getNode(tileId);
-    std::vector<unsigned int> returnVector;
+    //Node * current = getNode(tileId);
+    //std::vector<unsigned int> returnVector;
 
-    float bestInflu = 0.0f;
-    unsigned bestTile;
-    unsigned int counterTileMax{};
-    unsigned int counterTileBestInflu{};
-    for (int i = N; i <= NW; ++i)
-    {
-        if (current->isEdgeBlocked(static_cast<EDirection>(i)))
-        { // No need to process inaccessible tile
-            continue;
-        }
-        Node* neighboor = current->getNeighbour(static_cast<EDirection>(i));
-        if (neighboor && neighboor->getType()!= Node::FORBIDDEN)
-        { // neighboor is existing and autorized and accessible
-            ++counterTileMax;
-            float nodeinf = neighboor->getInfluence();
-            if (nodeinf > 0.0f)
-            {
-                if (bestInflu < nodeinf)
-                {
-                    bestInflu = nodeinf;
-                    bestTile = neighboor->getId();
-                }
-            }
-        }
-    }
-    return returnVector;
+    //float bestInflu = 0.0f;
+    //unsigned bestTile;
+    //unsigned int counterTileMax{};
+    //unsigned int counterTileBestInflu{};
+    //for (int i = N; i <= NW; ++i)
+    //{
+    //    if (current->isEdgeBlocked(static_cast<EDirection>(i)))
+    //    { // No need to process inaccessible tile
+    //        continue;
+    //    }
+    //    Node* neighboor = current->getNeighbour(static_cast<EDirection>(i));
+    //    if (neighboor && neighboor->getType()!= Node::FORBIDDEN)
+    //    { // neighboor is existing and autorized and accessible
+    //        ++counterTileMax;
+    //        float nodeinf = neighboor->getInfluence();
+    //        if (nodeinf > 0.0f)
+    //        {
+    //            if (bestInflu < nodeinf)
+    //            {
+    //                bestInflu = nodeinf;
+    //                bestTile = neighboor->getId();
+    //            }
+    //        }
+    //    }
+    //}
+    //return returnVector;
 }
 
 void Map::updateMap(TurnInfo& turnInfo)
@@ -173,7 +173,7 @@ void Map::updateMap(TurnInfo& turnInfo)
 
 void Map::updateEdges(TurnInfo& turnInfo)
 {
-    /*BOT_LOGIC_MAP_LOG(mLoggerEdges, "\nUpdate Edges", true);
+    BOT_LOGIC_MAP_LOG(mLoggerEdges, "\nUpdate Edges", true);
     for (std::pair<unsigned, ObjectInfo> info : turnInfo.objects)
     {
         Node* node = getNode(info.second.tileID);
@@ -214,7 +214,7 @@ void Map::updateEdges(TurnInfo& turnInfo)
                 }
             }
         }
-    }*/
+    }
 }
 
 void Map::processDoorState(ObjectInfo &object, Node* node, int i)
