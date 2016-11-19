@@ -56,7 +56,7 @@ void MyBotLogic::OnGameStarted()
 void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList)
 {
     BOT_LOGIC_LOG(mLogger, "\nTURN #" + std::to_string(++mTurnCount), true);
-    
+
     // Update graph
     Map::getInstance()->updateMap(_turnInfo);
 

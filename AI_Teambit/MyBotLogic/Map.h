@@ -3,13 +3,16 @@
 
 #include "Node.h"
 #include "Globals.h"
-#include <map>
-#include <vector>
 #include "Singleton.h"
 #include "NPCInfo.h"
 
 #include "Logger.h"
 #include <algorithm>
+#include <map>
+#include <vector>
+
+// For debug only
+#include <string>
 
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_MAP
@@ -22,6 +25,7 @@
 #endif
 
 struct TileInfo;
+struct ObjectInfo;
 struct TurnInfo;
 
 class Map : Singleton
@@ -29,9 +33,13 @@ class Map : Singleton
     static Map mInstance;
     unsigned int mWidth;
     unsigned int mHeight;
-    unsigned int mInfluenceRange;
+
     std::vector<Node*> mNodeMap;
     std::vector<unsigned int> mGoalTiles;
+	unsigned int mInfluenceRange;
+
+	std::map<unsigned, bool> mKnownTilesAndVisitedStatus;
+	std::vector<Node*> mInterestingNodes;
 
     // Log stuff
     Logger mLogger;
@@ -47,6 +55,13 @@ private:
     void updateEdges(TurnInfo&);
     void updateTiles(TurnInfo&);
 
+    // Edges update 
+    void processDoorState(ObjectInfo &object, Node* node, int i);
+
+    EDirection inverseDirection(const EDirection& dir) const
+    {
+        return static_cast<EDirection>((dir + 4) % 8);
+    }
 
 public:
     static Map *getInstance() noexcept
@@ -57,9 +72,16 @@ public:
     void initMap(int, int, int = 0);
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
-    
-    Node* getNode(unsigned int, unsigned int);
-    Node* getNode(unsigned int);
+    const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
+	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
+
+    // Influence methods
+	void propagateInfluence();
+	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
+    std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
+
+	Node* getNode(unsigned int, unsigned int) const;
+    Node* getNode(unsigned int) const;
     void setNodeType(unsigned int, Node::NodeType);
     unsigned int getWidth() const
     {
@@ -83,11 +105,13 @@ public:
     }
     void setInfluenceRange(unsigned int range)
     {
+        BOT_LOGIC_MAP_LOG(mLoggerInfluence, "\t Influence Range = " + std::to_string(range), true);
         mInfluenceRange = range;
     }
+	void addSeenTile(unsigned tileId);
 
     unsigned int calculateDistance(int start, int end);
-    
+
     void setLoggerPath();
     void logMap(unsigned);
     void logInfluenceMap(unsigned nbTurn);

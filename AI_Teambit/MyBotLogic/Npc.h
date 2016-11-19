@@ -40,7 +40,7 @@ class Npc
     enum StateMask
     {
         STATE_LEVEL_0 = 0b11000,
-        STATE_LEVEL_1 = 0b00111
+        STATE_LEVEL_1 = 0b11111
     };
 
     Objective mObjective;
@@ -68,7 +68,9 @@ public:
         mObjective = Objective{ aType, tileId };
     }
 
-    //void searchPath();
+    // Debug Mission
+    template<class T>
+    void DisplayVector(std::string, const std::vector<T>);
 
 private:
     void updateState();

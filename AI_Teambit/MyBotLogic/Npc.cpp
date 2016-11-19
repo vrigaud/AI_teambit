@@ -1,5 +1,8 @@
 #include "Npc.h"
 #include "LoggerPath.h"
+
+#include "Map.h"
+
 #include <set>
 #include <vector>
 
@@ -22,54 +25,56 @@ void Npc::update()
     enterStateMachine();
 }
 
-
 void Npc::updateState()
 {
     // Atm it's an if/ elseif cause we dont really know yet what impact the choice...
     // care at the order for more efficiency
     if (mObjective.mType == Objective::NONE)
     {
-        mCurrentState = WAITING;
+        mNextState = WAITING;
     }
     else if (mObjective.mType == Objective::SEARCH_MAP)
     {
-        mCurrentState = EXPLORE_MAP;
+        mNextState = EXPLORE_MAP;
     }
     else if (mObjective.mType == Objective::GO_TO)
     {
-        mCurrentState = SEARCH_PATH;
+        mNextState = SEARCH_PATH;
     }
     else if (mObjective.mType == Objective::SEARCH_H_DOOR)
     {
-        mCurrentState = EXPLORE_H_DOOR;
+        mNextState = EXPLORE_H_DOOR;
     }
 }
 
 void Npc::enterStateMachine()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "Enter state machine ->", false);
-    switch (mCurrentState & STATE_LEVEL_0)
-    {
-    case EXPLORING:
-        exploring();
-        break;
-    case MOVING:
-        moving();
-        break;
-    case WAITING:
-        searchPath();
-        waiting();
-        break;
-    }
+    do {
+        mCurrentState = mNextState;
+        switch (mCurrentState & STATE_LEVEL_0)
+        {
+        case EXPLORING:
+            exploring();
+            break;
+        case MOVING:
+            moving();
+            break;
+        case WAITING:
+            searchPath();
+            waiting();
+            break;
+        }
+    } while (mCurrentState != mNextState);
 }
 
 void Npc::exploring()
 {
-    BOT_LOGIC_NPC_LOG(mLogger, " Exploring", true);
-    do
+    BOT_LOGIC_NPC_LOG(mLogger, " Exploring", false);
+    do 
     {
         mCurrentState = mNextState;
-        switch (mCurrentState & STATE_LEVEL_1)
+        switch (mCurrentState)
         {
         case EXPLORE_MAP:
             exploreMap();
@@ -92,12 +97,12 @@ void Npc::exploring()
 
 void Npc::moving()
 {
-    BOT_LOGIC_NPC_LOG(mLogger, " Moving", true);
+    BOT_LOGIC_NPC_LOG(mLogger, " Moving", false);
     // TODO - moving fsm
     do
     {
         mCurrentState = mNextState;
-        switch (mCurrentState & STATE_LEVEL_1)
+        switch (mCurrentState)
         {
         case SEARCH_PATH:
             searchPath();
@@ -131,7 +136,9 @@ void Npc::waiting()
 void Npc::exploreMap()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
-    // TODO - pull influence tile
+    
+    Map* map = Map::getInstance();
+    //std::vector<unsigned int> v = map->get;
 }
 
 void Npc::exploreHiddenDoor()
@@ -166,7 +173,7 @@ void Npc::searchPath()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-SearchPath", true);
 
-    aStar(mPath.back(), 4);
+    aStar(mPath.back(), mObjective.mTileId);
 
     // TODO -
 }
@@ -211,15 +218,12 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
     multiset<Node*, NodeComparator> openedNodes{};
     vector<Node*> closedNodes{};
 
-
     closedNodes.reserve(maxNbNode);
-
     openedNodes.insert(current);
 
     while (!openedNodes.empty())
     {
         current = *begin(openedNodes);
-
         openedNodes.erase(current);
 
         //Success
@@ -235,17 +239,14 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 
         for (size_t i{}; i < Node::NBNEIGHBOURS; ++i)
         {
-            Node* neighbour = current->getNeighboor(static_cast<EDirection>(i));
-
+            Node* neighbour = current->getNeighbour(static_cast<EDirection>(i));
             if (!neighbour)
             {
                 continue;
             }
 
             int transitionCost = current->getCost() + 1;
-
             Node* parent = current->getParent();
-
             if (neighbour->getCost() < 1 || (parent && neighbour->getId() == parent->getId()))
             {
                 continue;
@@ -253,7 +254,6 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 
             auto testClosed = std::find(begin(closedNodes), end(closedNodes), neighbour);
             auto testOpened = std::find(begin(openedNodes), end(openedNodes), neighbour);
-
             if (
                 testClosed != closedNodes.end() && ((*testClosed)->getCost() < transitionCost) ||
                 testOpened != openedNodes.end() && ((*testOpened)->getCost() < transitionCost)
@@ -263,15 +263,26 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
             }
 
             neighbour->setParent(current);
-
             neighbour->setCost(transitionCost + current->getCost());
-
             neighbour->setHeuristic(neighbour->getCost() + Map::getInstance()->calculateDistance(neighbour->getId(), goalNodeId));
+           
             openedNodes.emplace(neighbour);
-
         }
-
         closedNodes.emplace_back(current);
     }
-    auto lol = 5;
+}
+
+
+//-------------------------------------------------------------------------------------------
+// DEbug Functions
+//-------------------------------------------------------------------------------------------
+template<class T>
+void Npc::DisplayVector(std::string info, const std::vector<T> v)
+{
+    std::string s{ "" };
+    for (T u : v)
+    {
+        s += std::to_string(u) + " ";
+    }
+    BOT_LOGIC_NPC_LOG(mLogger, info + s, true);
 }
