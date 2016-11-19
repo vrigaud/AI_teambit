@@ -17,16 +17,22 @@
 
 #include <vector>
 #include <algorithm>
+#include <map>
 
 
 
 class Npc;
 struct LevelInfo;
 struct TurnInfo;
+struct NPCInfo;
 class MiCoMa : Singleton
 {
+
     std::vector<Npc*> mNpcs;
-    Logger mLogger;
+	std::map<unsigned int, unsigned int> findBestGoalByNpc(const std::map<unsigned int, NPCInfo>& npcInfo, std::vector<unsigned int>& targetList);
+	std::map<unsigned int, unsigned int> findBestGoalByGoal(std::map<unsigned int, NPCInfo> npcInfo, const std::vector<unsigned int>& targetList);
+	
+	Logger mLogger;
 
 public :
     static MiCoMa* getInstance()
@@ -34,8 +40,8 @@ public :
         static MiCoMa instance;
         return &instance;
     }
-    void init(const LevelInfo&);
 
+    void init(const LevelInfo&);
     void update(const TurnInfo&);
 };
 

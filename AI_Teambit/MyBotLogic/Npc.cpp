@@ -25,6 +25,13 @@ void Npc::update()
     enterStateMachine();
 }
 
+void Npc::setGoal(const unsigned int goalID)
+{
+	mGoal = goalID;
+	mHasGoal = true;
+	setObjective(Objective::GO_TO, mGoal);
+}
+
 void Npc::updateState()
 {
     // Atm it's an if/ elseif cause we dont really know yet what impact the choice...

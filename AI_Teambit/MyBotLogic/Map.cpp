@@ -355,7 +355,6 @@ unsigned int Map::calculateDistance(int indexStart, int indexEnd)
     return std::max(abs(deltaX), std::max(abs(deltaY), abs(deltas)));
 }
 
-
 void Map::addGoalTile(unsigned int number)
 {
     if (std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))

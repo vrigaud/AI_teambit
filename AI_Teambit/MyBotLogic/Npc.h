@@ -51,8 +51,9 @@ class Npc
     unsigned int mId;
     unsigned int mGoal;
     unsigned int mTarget;
-
     std::vector<unsigned int>mPath;
+
+	bool mHasGoal;
 
     // Debugger
     unsigned int mTurnCount;
@@ -63,6 +64,9 @@ public:
 
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
+
+	bool hasGoal() { return mHasGoal; }
+	void setGoal(const unsigned int goalID);
     void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
     {
         mObjective = Objective{ aType, tileId };
@@ -71,6 +75,9 @@ public:
     // Debug Mission
     template<class T>
     void DisplayVector(std::string, const std::vector<T>);
+
+	// Ugly getter
+	unsigned int getID() { return mId; }
 
 private:
     void updateState();
