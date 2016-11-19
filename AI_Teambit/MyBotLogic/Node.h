@@ -3,12 +3,13 @@
 #include <cmath>
 #include "Globals.h"
 
+
 struct Position
 {
     int x;
     int y;
     Position(int xVal, int yVal)
-        :x{xVal}, y{yVal}
+        :x{ xVal }, y{ yVal }
     {}
 };
 
@@ -24,7 +25,7 @@ struct EdgeData
     } mEdgeType;
     bool mBlocking;
     bool mOpen;
-    
+
     EdgeData()
         : mEdgeType{ FREE }, mBlocking{ false }, mOpen{ false }
     {}
@@ -56,14 +57,23 @@ public:
         PRESSURE_PLATE,
         PATH
     };
+    
+    enum { NBNEIGHBOURS = 8 };
+
 private:
+
+
     Position* mPos;
     unsigned int mID;
     NodeType mType;
     EdgeData mEdges[8]{};
+    Node* mParent;
 
+    int mCost{ 1 };
+    unsigned int mHeuristic{};
 
-    Node* mNeighbours[8] = {nullptr};
+    
+    Node* mNeighbours[NBNEIGHBOURS] = { nullptr };
     //unsigned int m_npcId = {0};
 
     InfluenceData mInfluence;
@@ -73,7 +83,29 @@ private:
     //bool m_knowEverythingAboutIt;
 
 public:
+
     Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal);
+
+
+    int getCost() const noexcept
+    {
+        return mCost;
+    }
+
+    void setCost(const int cost)
+    {
+        mCost = cost;
+    }
+
+    unsigned int getHeuristic() const noexcept
+    {
+        return mHeuristic;
+    }
+
+    void setHeuristic(unsigned int heuristic)
+    {
+        mHeuristic = heuristic;
+    }
 
     NodeType getType() const noexcept
     {
@@ -150,6 +182,24 @@ public:
     void setInfluence(float inf, const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP)
     {
         mInfluence.mInfluences[aType] = inf;
+    }
+
+    void setParent(Node* parent)
+    {
+        mParent = parent;
+    }
+
+    Node* getParent() const noexcept
+    {
+        return mParent;
+    }
+};
+
+struct NodeComparator
+{
+    bool operator() (const Node* n0, const Node* n1) const
+    {
+         return n0->getHeuristic() < n1->getHeuristic();
     }
 };
 

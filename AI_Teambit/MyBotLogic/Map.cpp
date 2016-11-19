@@ -202,11 +202,13 @@ void Map::updateEdges(TurnInfo& turnInfo)
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
                         processDoorState(object, node, i);
+                        node->setCost(-2);
                     }
                     else
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WINDOW", true);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::WINDOW);
+                        node->setCost(-2);
                     }
                 }
                 else if (typeDoor != end(object.objectTypes))
@@ -246,6 +248,8 @@ void Map::updateTiles(TurnInfo& turnInfo)
         if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::FORBIDDEN);
+            mNodeMap[tileInfo.tileID]->setCost(-1);
+            
         }
         else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target) != tileInfo.tileAttributes.end())
         {
@@ -338,7 +342,7 @@ Node* Map::getNode(unsigned int index) const
     return mNodeMap[index];
 }
 
-float Map::calculateDistance(int indexStart, int indexEnd)
+unsigned int Map::calculateDistance(int indexStart, int indexEnd)
 {
     unsigned int firstX = indexStart % mWidth;
     unsigned int firstY = indexStart / mWidth;

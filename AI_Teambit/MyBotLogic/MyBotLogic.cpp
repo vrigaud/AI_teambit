@@ -55,7 +55,6 @@ void MyBotLogic::OnGameStarted()
 
 void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList)
 {
-
     BOT_LOGIC_LOG(mLogger, "\nTURN #" + std::to_string(++mTurnCount), true);
 
     // Update graph
@@ -64,20 +63,6 @@ void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _acti
     Map::getInstance()->logMap(mTurnCount);
 
     MiCoMa::getInstance()->update(_turnInfo);
-
-    // Debug
-    /*switch (mTurnCount)
-    {
-    case 1:
-        _actionList.emplace_back(new Move(_turnInfo.npcs[1].npcID, SE));
-        break;
-    case 2:
-        _actionList.emplace_back(new Move(_turnInfo.npcs[1].npcID, SW));
-        break;
-    case 3:
-        _actionList.emplace_back(new Move(_turnInfo.npcs[1].npcID, SE));
-        break;
-    } */   //Test influence map for map TC_032 (windowed impacted influence)
 }
 
 void MyBotLogic::Exit()
