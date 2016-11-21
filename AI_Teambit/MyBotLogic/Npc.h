@@ -17,6 +17,10 @@
 
 #include <string>
 #include <vector>
+#include <list>
+struct Action;
+
+class OnEstPasBien {};
 class Npc
 {
 
@@ -48,11 +52,14 @@ class Npc
     State mCurrentState;
     State mNextState;
 
+    Action* mAction;
+
     unsigned int mId;
     unsigned int mGoal;
     unsigned int mTarget;
-
     std::vector<unsigned int>mPath;
+
+	bool mHasGoal;
 
     // Debugger
     unsigned int mTurnCount;
@@ -63,6 +70,9 @@ public:
 
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
+
+	bool hasGoal() { return mHasGoal; }
+	void setGoal(const unsigned int goalID);
     void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
     {
         mObjective = Objective{ aType, tileId };
@@ -71,6 +81,12 @@ public:
     // Debug Mission
     template<class T>
     void DisplayVector(std::string, const std::vector<T>);
+
+	// Ugly getter / forwarder
+	unsigned int getID() { return mId; }
+    Action* getAction() {
+        return mAction;
+    }
 
 private:
     void updateState();
