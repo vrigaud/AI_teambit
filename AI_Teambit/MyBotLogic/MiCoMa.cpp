@@ -6,6 +6,14 @@
 #include "Globals.h"
 #include "Npc.h"
 
+#include "MyBotLogic/BehaviourTree/BaseBloc.h"
+#include "MyBotLogic/BehaviourTree/BlocAction.h"
+#include "MyBotLogic/BehaviourTree/BlocSelect.h"
+#include "MyBotLogic/BehaviourTree/BlocSequence.h"
+#include "MyBotLogic/BehaviourTree/BlocForUpdate.h"
+
+using namespace BehaviourTree;
+
 void MiCoMa::init(const LevelInfo& levelInfos)
 {
 #ifdef BOT_LOGIC_DEBUG_MICOMA
@@ -19,6 +27,17 @@ void MiCoMa::init(const LevelInfo& levelInfos)
     {
         mNpcs.push_back(new Npc(npc.second.npcID, npc.second.tileID));
     }
+
+    BlocSelect* findGoalSelect = new BlocSelect();
+    BlocSequence* sequence = new BlocSequence();
+
+    mRoot->connect(*getBlocForUpdate(*this, std::vector<Action*>{} ));
+    mRoot->connect(*getBlocHasGoal(mRoot));
+    mRoot->connect(*findGoalSelect);
+
+    findGoalSelect->connect(*getBlocFindBGBG);
+    sequence->connect(*getBGBN);
+    sequence->connect(*getCompareTvsN);
 }
 
 void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
@@ -58,7 +77,6 @@ void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
                 curNpc->setObjective(Objective::SEARCH_MAP);
             }
         }
-
     }
 
     for (Npc* npc : mNpcs)
@@ -104,8 +122,7 @@ std::map<unsigned int, unsigned int> MiCoMa::findBestGoalByGoal(std::map<unsigne
             break;
         }
         int bestDist = 666;
-        int npcId = -1;
-        for (std::pair<unsigned, NPCInfo> npc : npcInfo)
+        int npcId = -1;for (std::pair<unsigned, NPCInfo> npc : npcInfo)
         {
             float distance = Map::getInstance()->calculateDistance(npc.second.tileID, goal);
             if (distance < bestDist)

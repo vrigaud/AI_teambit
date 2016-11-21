@@ -34,6 +34,7 @@ class MiCoMa : Singleton
 	std::map<unsigned int, unsigned int> findBestGoalByGoal(std::map<unsigned int, NPCInfo> npcInfo, const std::vector<unsigned int>& targetList);
 	
 	Logger mLogger;
+    BehaviourTree::BlocSequence* mRoot;
 
 public :
     static MiCoMa* getInstance()
@@ -44,6 +45,11 @@ public :
 
     void init(const LevelInfo&);
     void update(const TurnInfo&, std::vector<Action*>&);
+
+    std::vector<Npc*> getNpcs() const noexcept
+    {
+        return mNpcs;
+    }
 };
 
 #endif //MICOMA_H
