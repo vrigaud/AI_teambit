@@ -5,11 +5,13 @@
 
 #include <set>
 #include <vector>
+#include <list>
 
 using namespace std;
 
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
-    : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{ a_tileId }
+    : mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{ a_tileId },
+    mHasGoal{}
 {
 #ifdef BOT_LOGIC_DEBUG_NPC
     mLogger.Init(LoggerPath::getInstance()->getPath(), "Npc_" + std::to_string(mId) + ".log");
@@ -68,7 +70,6 @@ void Npc::enterStateMachine()
             moving();
             break;
         case WAITING:
-            searchPath();
             waiting();
             break;
         }
@@ -143,21 +144,30 @@ void Npc::waiting()
 void Npc::exploreMap()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
-    
-    Map* map = Map::getInstance();
-    //std::vector<unsigned int> v = map->get;
+    std::vector<unsigned int> v = Map::getInstance()->getCloseMostInfluenteTile(mPath.back());
+    if (v.empty())
+    {
+        throw OnEstPasBien{};
+    }
+
+    mPath = { v[0], mPath.back() };
+
+    mNextState = EXPLORE_DNPC;
 }
 
 void Npc::exploreHiddenDoor()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreHiddenDoor", true);
     // TODO - pull influence tile
+
+    mNextState = EXPLORE_H_DOOR;
 }
 
 inline void Npc::exploreWaiting()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreWaiting", true);
     // TODO - wait cause someone want to go on the same tile
+
     mCurrentState = EXPLORE_WAITING;
     mNextState = EXPLORE_WAITING;
 }
@@ -166,12 +176,18 @@ void Npc::exploreDNpc()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreDNpc", true);
     // TODO - see if other npc want to go on same tile
+
+    mNextState = MOVE;
 }
 
 void Npc::move()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-Move", true);
     // TODO - just push action in the list?
+
+    mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() - 2]));
+    mPath.pop_back();
+    mNextState = MOVE;
 }
 
 
@@ -179,21 +195,34 @@ void Npc::move()
 void Npc::searchPath()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-SearchPath", true);
+    // TODO - update path if needed
+    if (mPath.size() == 1)
+    {
+        aStar(mPath.back(), mObjective.mTileId); 
+    }
 
-    aStar(mPath.back(), mObjective.mTileId);
-
-    // TODO -
+    mNextState = MOVING_DNPC;
 }
 
 void Npc::followPath()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-FollowPath", true);
-    // TODO - 
+
+    if (mPath.back() == mGoal)
+    {
+        mNextState = ARRIVED;
+        return;
+    }
+
+    mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() - 2]));
+    mPath.pop_back();
+    mNextState = FOLLOW_PATH;
 }
 
 void Npc::movingDNpc()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-MovingDNpc", true);
+    mNextState = FOLLOW_PATH;
     // TODO - 
 }
 
@@ -215,6 +244,115 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 {
     BOT_LOGIC_NPC_LOG(mLogger, "- aStar", true);
 
+    //***v2.0 : NodeRecord version
+    Map* map = Map::getInstance();
+    Node* start{ Map::getInstance()->getNode(startNodeId) };
+    Node* goal{ Map::getInstance()->getNode(goalNodeId) };
+    mPath.clear();
+
+    //Init record
+    NodeRecord* currentRecord = new NodeRecord{ start, 0, map->calculateDistance(startNodeId, goalNodeId) };
+
+    //Init lists
+    std::list<NodeRecord*> openedList{}, closedList{};
+    openedList.emplace_back(currentRecord);
+
+    NodeRecord* prevRecord;
+    NodeRecord* endNodeRecord;
+    while (!openedList.empty())
+    {
+        //Get smallest element
+        currentRecord = *std::min_element(std::begin(openedList), std::end(openedList));
+        Node* currentNode{ currentRecord->mNode };
+
+        //Found goal - yay!
+        if (currentNode == goal)
+            break;
+
+        //If not, check neighbours to find smallest cost step
+        for (size_t i{}; i < Node::NBNEIGHBOURS; ++i)
+        {
+            Node* neighbour = currentNode->getNeighbour(static_cast<EDirection>(i));
+            if (!neighbour || (neighbour->getType() == Node::FORBIDDEN)
+                || currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
+            {
+                continue;
+            }
+
+            NodeRecord::cost_type endNodeCost = currentRecord->mCostSoFar;
+            NodeRecord::cost_type endNodeHeuristic{ 0 };
+
+            //If closed node, may have to skip or remove it from closed list
+            if ((endNodeRecord = NodeRecord::findIn(closedList, neighbour)))
+            {
+                //If not a shorter route, skip
+                if (endNodeRecord->mCostSoFar <= endNodeCost)
+                    continue;
+
+                //If shorter, we need to put it back in the opened list
+                closedList.remove(endNodeRecord);
+
+                //Put record back in opened list
+                openedList.emplace_back(endNodeRecord);
+
+                //Update heuristic
+                endNodeHeuristic = endNodeRecord->mEstimatedTotalCost - endNodeRecord->mCostSoFar;
+            }
+            else if ((endNodeRecord = NodeRecord::findIn(openedList, neighbour)))
+            {
+                if (endNodeRecord->mCostSoFar <= endNodeCost)
+                    continue;
+
+                endNodeHeuristic = endNodeRecord->mEstimatedTotalCost - endNodeRecord->mCostSoFar;
+            }
+            //Unvited node : need a new record
+            else
+            {
+                endNodeRecord = new NodeRecord{ neighbour, 0, map->calculateDistance(neighbour->getId(), goalNodeId) };
+
+                //Put record back in opened list
+                openedList.emplace_back(endNodeRecord);
+            }
+
+            //Update record
+            endNodeRecord->mCostSoFar = endNodeCost;
+            endNodeRecord->mPrevious = currentRecord;
+            endNodeRecord->mEstimatedTotalCost = endNodeCost + endNodeHeuristic;
+
+        }
+        //Update previous
+        prevRecord = currentRecord;
+
+        //Looked at all current node's neighbours : remove opened, put it in closed
+        openedList.remove(currentRecord);
+        closedList.emplace_back(currentRecord);
+    }
+
+    //Found our goal or run out of nodes
+    std::list<unsigned int> finalPath{};
+    if (currentRecord->mNode != goal)
+        return;
+
+    else
+    {
+        //Success
+        while (currentRecord)
+        {
+            mPath.emplace_back(currentRecord->mNode->getId());
+            currentRecord = currentRecord->mPrevious;
+        }
+    }
+
+
+    //Cleanup
+    for (NodeRecord *nr : openedList)
+        delete nr;
+
+    for (NodeRecord *nr : closedList)
+        delete nr;
+
+    //***v1.0 : K-E & Louis
+    /*
     //We need a clear path whether we fail or not
     mPath.clear();
 
@@ -254,7 +392,8 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 
             int transitionCost = current->getCost() + 1;
             Node* parent = current->getParent();
-            if (neighbour->getCost() < 1 || (parent && neighbour->getId() == parent->getId()))
+            //TODO : [OPTI] struct NodeRecord to store temporary parent
+            if (neighbour->getCost() < 1)
             {
                 continue;
             }
@@ -277,6 +416,7 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
         }
         closedNodes.emplace_back(current);
     }
+    */
 }
 
 

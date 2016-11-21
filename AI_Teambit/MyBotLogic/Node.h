@@ -2,6 +2,7 @@
 #define NODE_HEADER
 #include <cmath>
 #include "Globals.h"
+#include <list>
 
 
 struct Position
@@ -204,3 +205,50 @@ struct NodeComparator
 };
 
 #endif // NODE_HEADER
+
+#ifndef NODE_RECORD_H
+#define NODE_RECORD_H
+
+struct NodeRecord
+{
+    using cost_type = unsigned int;
+
+    Node* mNode;
+    NodeRecord* mPrevious;
+    cost_type mCostSoFar;
+    cost_type mEstimatedTotalCost;
+
+    NodeRecord()
+        : mNode{ nullptr }, mPrevious{ nullptr }, mCostSoFar{ 0 }, mEstimatedTotalCost{ 0 }
+    {}
+    NodeRecord(NodeRecord* other)
+        : mNode{ other->mNode }, mPrevious{ other->mPrevious }, mCostSoFar{ other->mCostSoFar }, mEstimatedTotalCost{ other->mEstimatedTotalCost }
+    {}
+    NodeRecord(Node* n, const cost_type& costSoFar, const cost_type& estimatedCost)
+        : mNode{ n }, mPrevious{ nullptr }, mCostSoFar{ costSoFar }, mEstimatedTotalCost{ estimatedCost }
+    {}
+    ~NodeRecord() {}
+
+    bool operator<(NodeRecord* other)
+    {
+        return mEstimatedTotalCost < other->mEstimatedTotalCost;
+    }
+    bool operator==(NodeRecord* other)
+    {
+        return mNode == other->mNode;
+    }
+
+    bool empty() { return !mNode; }
+
+    static NodeRecord* findIn(std::list<NodeRecord*> nrList, Node* n)
+    {
+        for (auto nr : nrList)
+        {
+            if (nr->mNode == n)
+                return nr;
+        }
+
+        return nullptr;
+    }
+};
+#endif // !NODE_RECORD_H

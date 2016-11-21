@@ -54,7 +54,6 @@ void Map::createInfluenceMap(const InfluenceData::InfluenceType& aType)
         {
             float tempInflu = 0.0f;
 
-            //TODO : [REFACTO] mergeable loops ?
             for (int i = N; i <= NW; ++i)
             {
                 EDirection dir = static_cast<EDirection>(i);
@@ -353,6 +352,19 @@ unsigned int Map::calculateDistance(int indexStart, int indexEnd)
     int deltaY = static_cast<int>(sndY - firstY);
     int deltas = deltaY - deltaX;
     return std::max(abs(deltaX), std::max(abs(deltaY), abs(deltas)));
+}
+
+EDirection Map::getDirection(unsigned int from, unsigned int to)
+{
+    Node* fromN = getNode(from);
+    Node* toN = getNode(to);
+    for (int i{}; i < Node::NBNEIGHBOURS; ++i)
+    {
+        if (fromN->getNeighbour(static_cast<EDirection>(i)) == toN)
+        {
+            return static_cast<EDirection>(i);
+        }
+    }
 }
 
 void Map::addGoalTile(unsigned int number)

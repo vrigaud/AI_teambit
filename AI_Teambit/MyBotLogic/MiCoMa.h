@@ -25,6 +25,7 @@ class Npc;
 struct LevelInfo;
 struct TurnInfo;
 struct NPCInfo;
+struct Action;
 class MiCoMa : Singleton
 {
 
@@ -42,7 +43,7 @@ public :
     }
 
     void init(const LevelInfo&);
-    void update(const TurnInfo&);
+    void update(const TurnInfo&, std::vector<Action*>&);
 };
 
 #endif //MICOMA_H
