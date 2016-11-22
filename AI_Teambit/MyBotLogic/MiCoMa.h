@@ -44,6 +44,8 @@ public :
 
     void init(const LevelInfo&);
     void update(const TurnInfo&, std::vector<Action*>&);
+
+	std::vector<Npc*> getNpcs() const { return mNpcs; }
 };
 
 #endif //MICOMA_H

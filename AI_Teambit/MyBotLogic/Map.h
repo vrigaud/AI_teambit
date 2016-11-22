@@ -110,7 +110,7 @@ public:
     }
 	void addSeenTile(unsigned tileId);
 
-    unsigned int calculateDistance(int start, int end);
+    unsigned int calculateDistance(int start, int end) const;
     EDirection getDirection(unsigned int from, unsigned int to);
 
     void setLoggerPath();

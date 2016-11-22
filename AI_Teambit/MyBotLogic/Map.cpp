@@ -167,10 +167,6 @@ void Map::updateMap(TurnInfo& turnInfo)
 {
     updateTiles(turnInfo);
     updateEdges(turnInfo);
-
-    //Test
-    createInfluenceMap();
-    logInfluenceMap(turnInfo.turnNb);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
@@ -341,17 +337,14 @@ Node* Map::getNode(unsigned int index) const
     return mNodeMap[index];
 }
 
-unsigned int Map::calculateDistance(int indexStart, int indexEnd)
+unsigned int Map::calculateDistance(int indexStart, int indexEnd) const
 {
-    unsigned int firstX = indexStart % mWidth;
-    unsigned int firstY = indexStart / mWidth;
-    unsigned int sndX = indexEnd % mWidth;
-    unsigned int sndY = indexEnd / mWidth;
+	Node* nStart = getNode(indexStart);
+	Node* nEnd = getNode(indexEnd);
 
-    int deltaX = static_cast<int>(sndX - firstX);
-    int deltaY = static_cast<int>(sndY - firstY);
-    int deltas = deltaY - deltaX;
-    return std::max(abs(deltaX), std::max(abs(deltaY), abs(deltas)));
+	int x = nEnd->getPosition()->x - nStart->getPosition()->x;
+	int y = nEnd->getPosition()->y - nStart->getPosition()->y;
+	return (abs(x) + abs(y)) * 10;
 }
 
 EDirection Map::getDirection(unsigned int from, unsigned int to)

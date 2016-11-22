@@ -23,17 +23,11 @@ void MiCoMa::init(const LevelInfo& levelInfos)
 
 void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
 {
-    //1. Get target list
-    //2. For each npc : 
-    //		for each target NOT taken :
-    //			evaluate distances(npc, target)
-    //3. Set npcGoal to closest target
-    //4. Set npcObjective : GO_TO
+	//***NOTE : 
     // ATM default npc state is exploring so just change objective when we've got
     // a goal for the npc.
 
     std::map<unsigned int, unsigned int> goalMap;
-
     std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
     if (targetList.size() > turnInfo.npcs.size())
     {
@@ -58,7 +52,6 @@ void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
                 curNpc->setObjective(Objective::SEARCH_MAP);
             }
         }
-
     }
 
     for (Npc* npc : mNpcs)
@@ -66,7 +59,7 @@ void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
         npc->update();
         if (npc->getAction())
         {
-            _actionList.push_back(npc->getAction()->Clone());
+            _actionList.push_back(npc->forwardAction()->Clone());
         }
     }
 }

@@ -56,7 +56,6 @@ class Npc
 
     unsigned int mId;
     unsigned int mGoal;
-    unsigned int mTarget;
     std::vector<unsigned int>mPath;
 
 	bool mHasGoal;
@@ -84,9 +83,20 @@ public:
 
 	// Ugly getter / forwarder
 	unsigned int getID() { return mId; }
-    Action* getAction() {
-        return mAction;
-    }
+	unsigned int getObjectiveTile() { return mObjective.mTileId; }
+	//Returns the ID of the next tile on which the NPC is supposed to move
+	//Returns the ID of the current tile if no move expected
+	unsigned int getNextStepTile() { return (mPath.size() == 1 ? mPath.back() : mPath[mPath.size() - 2]); }
+	unsigned int getCurrentTile() { return mPath.back(); }
+
+	std::vector<unsigned int> getPath() { return mPath; }
+	Action* getAction() { return mAction; }
+	Action* forwardAction()
+	{
+		Action* action = getAction();
+		mAction = nullptr;
+		return action;
+	}
 
 private:
     void updateState();
