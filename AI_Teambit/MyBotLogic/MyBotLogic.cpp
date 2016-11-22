@@ -59,7 +59,6 @@ void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _acti
 
     // Update graph
     Map::getInstance()->updateMap(_turnInfo);
-
     Map::getInstance()->logMap(mTurnCount);
 
     MiCoMa::getInstance()->update(_turnInfo, _actionList);

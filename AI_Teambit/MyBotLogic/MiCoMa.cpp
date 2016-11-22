@@ -10,7 +10,10 @@
 #include "MyBotLogic/BehaviourTree/BlocAction.h"
 #include "MyBotLogic/BehaviourTree/BlocSelect.h"
 #include "MyBotLogic/BehaviourTree/BlocSequence.h"
-#include "MyBotLogic/BehaviourTree/BlocForUpdate.h"
+#include "MyBotLogic/BehaviourTree/BlocUpdateActionList.h"
+#include "MyBotLogic/BehaviourTree/BlocHasGoal.h"
+#include "MyBotLogic/BehaviourTree/BlocFindBGBG.h"
+#include "MyBotLogic/BehaviourTree/BlocFindBGBNpc.h"
 
 using namespace BehaviourTree;
 
@@ -28,65 +31,35 @@ void MiCoMa::init(const LevelInfo& levelInfos)
         mNpcs.push_back(new Npc(npc.second.npcID, npc.second.tileID));
     }
 
+    mRoot = new BehaviourTree::BlocSequence{};
+
+#pragma region BasicGoalAssigment_SubTree
+    /* Sub-tree #1 : basic goal assignment */
     BlocSelect* findGoalSelect = new BlocSelect();
     BlocSequence* sequence = new BlocSequence();
+    findGoalSelect->connect(*getBlocFindBGBNpc());
+    findGoalSelect->connect(*getBlocFindBGBG());
 
-    mRoot->connect(*getBlocForUpdate(*this, std::vector<Action*>{} ));
-    mRoot->connect(*getBlocHasGoal(mRoot));
     mRoot->connect(*findGoalSelect);
+    mRoot->connect(*getBlocHasGoal());
+    mRoot->connect(*getBlocUpdateActionList());
+#pragma endregion
 
-    findGoalSelect->connect(*getBlocFindBGBG);
-    sequence->connect(*getBGBN);
-    sequence->connect(*getCompareTvsN);
+
+    //TODO - 
+
+
 }
 
 void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
 {
-    //1. Get target list
-    //2. For each npc : 
-    //		for each target NOT taken :
-    //			evaluate distances(npc, target)
-    //3. Set npcGoal to closest target
-    //4. Set npcObjective : GO_TO
-    // ATM default npc state is exploring so just change objective when we've got
-    // a goal for the npc.
 
-    std::map<unsigned int, unsigned int> goalMap;
+    //mBTree.run();
 
-    std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
-    if (targetList.size() > turnInfo.npcs.size())
-    {
-        goalMap = findBestGoalByNpc(turnInfo.npcs, targetList);
-    }
-    else
-    {
-        goalMap = findBestGoalByGoal(turnInfo.npcs, targetList);
-    }
+    BlackBoard::getInstance()->update(turnInfo);
+    (*mRoot)();
+    _actionList = BlackBoard::getInstance()->getActionList();
 
-    for (Npc* curNpc : mNpcs)
-    {
-        if (!curNpc->hasGoal())
-        {
-            if (goalMap.find(curNpc->getID()) != end(goalMap))
-            {
-                unsigned int goalTile = goalMap[curNpc->getID()];
-                curNpc->setGoal(goalTile);
-            }
-            else
-            {
-                curNpc->setObjective(Objective::SEARCH_MAP);
-            }
-        }
-    }
-
-    for (Npc* npc : mNpcs)
-    {
-        npc->update();
-        if (npc->getAction())
-        {
-            _actionList.push_back(npc->getAction()->Clone());
-        }
-    }
 }
 
 std::map<unsigned int, unsigned int> MiCoMa::findBestGoalByNpc(const std::map<unsigned int, NPCInfo>& npcInfo, std::vector<unsigned int>& targetList)

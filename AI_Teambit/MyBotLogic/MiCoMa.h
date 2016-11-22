@@ -3,6 +3,7 @@
 
 #include "Singleton.h"
 #include "Objective.h"
+#include "BehaviourTree/GeneralAction.h"
 
 #include "Logger.h"
 #ifdef _DEBUG
@@ -18,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include "BehaviourTree/BlocSequence.h"
 
 
 
@@ -26,6 +28,7 @@ struct LevelInfo;
 struct TurnInfo;
 struct NPCInfo;
 struct Action;
+
 class MiCoMa : Singleton
 {
 

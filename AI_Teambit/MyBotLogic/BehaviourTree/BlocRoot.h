@@ -9,18 +9,20 @@
 
 namespace BehaviourTree
 {
-    class BehaviorTreeObject : public BaseBloc
+    class BehaviourTreeObject : public BaseBloc
     {
     private:
         BaseBloc* mRoot;
 
 
     public:
-        BehaviorTreeObject(BaseBloc& root) noexcept :
+        BehaviourTreeObject() : mRoot{}
+        {}
+        BehaviourTreeObject(BaseBloc& root) noexcept :
             mRoot{ &root }
         {}
 
-        ~BehaviorTreeObject()
+        ~BehaviourTreeObject()
         {
             delete mRoot;
         }
