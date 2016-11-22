@@ -165,8 +165,9 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
 
 void Map::updateMap(TurnInfo& turnInfo)
 {
-    updateTiles(turnInfo);
+	//Edges need to be updated first to avoid adding unaccessible goal
     updateEdges(turnInfo);
+    updateTiles(turnInfo);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
@@ -197,13 +198,11 @@ void Map::updateEdges(TurnInfo& turnInfo)
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
                         processDoorState(object, node, i);
-                        node->setCost(-2);
                     }
                     else
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WINDOW", true);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::WINDOW);
-                        node->setCost(-2);
                     }
                 }
                 else if (typeDoor != end(object.objectTypes))
@@ -239,11 +238,9 @@ void Map::updateTiles(TurnInfo& turnInfo)
     {
         auto tileInfo = info.second;
 
-        //        
         if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::FORBIDDEN);
-            mNodeMap[tileInfo.tileID]->setCost(-1);
             
         }
         else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target) != tileInfo.tileAttributes.end())
@@ -370,7 +367,7 @@ void Map::addGoalTile(unsigned int number)
         for (int i = N; i <= NW; ++i)
         {
             EDirection dir = static_cast<EDirection>(i);
-            EDirection invDir = inverseDirection(dir);
+
             Node* tempNode = currentNode->getNeighbour(dir);
             if (tempNode != nullptr && !currentNode->isEdgeBlocked(dir))
             {

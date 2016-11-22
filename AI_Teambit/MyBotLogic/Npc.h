@@ -20,7 +20,7 @@
 #include <list>
 struct Action;
 
-class OnEstPasBien {};
+class ThisIsNoGoodAtAllMiFriend {};
 class Npc
 {
 
@@ -101,6 +101,7 @@ public:
 private:
     void updateState();
     void enterStateMachine();
+
     // Level 0 function for FSM
     void exploring();
     void moving();
@@ -111,16 +112,20 @@ private:
     void exploreHiddenDoor();
     inline void exploreWaiting();// Delete ?
     void exploreDNpc();
-    void move();
+	void move();
 
     // Level 1 function for MOVING state cluster
     void searchPath();
     void followPath();
     void movingDNpc();
-    inline void movingWaiting(); // Delete ?
+
+	inline void movingWaiting(); // Delete ?
     inline void arrived();
     
     void aStar(unsigned int, unsigned int);
+
+	bool isBlockedByNpc(Npc* npc);
+	bool hasShorterPath(Npc* npc);
 };
 
 #endif // NPC_H

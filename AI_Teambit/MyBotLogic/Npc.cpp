@@ -110,7 +110,7 @@ void Npc::exploring()
 void Npc::moving()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, " Moving", true);
-	// TODO - moving fsm
+
 	do
 	{
 		mCurrentState = mNextState;
@@ -135,10 +135,11 @@ void Npc::moving()
 	} while (mCurrentState != mNextState);
 }
 
+// You just have to wait..
 void Npc::waiting()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, " Waiting", true);
-	// TODO - waiting fsm ... wait, you just have to wait..
+
 	mCurrentState = WAITING;
 	mNextState = WAITING;
 }
@@ -148,13 +149,17 @@ void Npc::waiting()
 void Npc::exploreMap()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
+
 	std::vector<unsigned int> v = Map::getInstance()->getCloseMostInfluenteTile(mPath.back());
 	if (v.empty())
 	{
-		throw OnEstPasBien{};
+		throw ThisIsNoGoodAtAllMiFriend{};
 	}
 
 	mPath = { v[0], mPath.back() };
+
+	//Logger
+	DisplayVector("\tExploration path : ", mPath);
 
 	mNextState = EXPLORE_DNPC;
 }
@@ -167,10 +172,10 @@ void Npc::exploreHiddenDoor()
 	mNextState = EXPLORE_H_DOOR;
 }
 
+// Wait cause someone want to go on the same tile
 inline void Npc::exploreWaiting()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, "-ExploreWaiting", true);
-	// TODO - wait cause someone want to go on the same tile
 
 	mCurrentState = EXPLORE_WAITING;
 	mNextState = EXPLORE_WAITING;
@@ -179,9 +184,24 @@ inline void Npc::exploreWaiting()
 void Npc::exploreDNpc()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, "-ExploreDNpc", true);
-	// TODO - see if other npc want to go on same tile
-
 	mNextState = MOVE;
+
+	const std::vector<Npc*> npcList = MiCoMa::getInstance()->getNpcs();
+	const Map *map = Map::getInstance();
+
+	for (Npc* npc : npcList)
+	{
+		if (npc == this)
+		{
+			continue;
+		}
+
+		if (isBlockedByNpc(npc))
+		{
+			mNextState = EXPLORE_WAITING;
+			break;
+		}
+	}
 }
 
 void Npc::move()
@@ -201,13 +221,20 @@ void Npc::searchPath()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, "-SearchPath", true);
 
-	// TODO - update path if needed
+	// TODO - update path if needed (TC_40 : Maze)
 	if (mPath.size() == 1)
 	{
+		unsigned int currentTileID = getCurrentTile();
 		aStar(mPath.back(), mObjective.mTileId);
+
+		//No path found
+		if (mPath.empty())
+		{
+			mPath.emplace_back(currentTileID);
+		}
 	}
 
-	DisplayVector("Path to Objective Tile -> ", mPath);
+	DisplayVector("\tPath to Objective Tile -> ", mPath);
 
 	mNextState = MOVING_DNPC;
 }
@@ -233,10 +260,6 @@ void Npc::movingDNpc()
 	BOT_LOGIC_NPC_LOG(mLogger, "-MovingDNpc", true);
 	mNextState = FOLLOW_PATH;
 
-	//1. Get npcs list
-	//2. Compare npcs' distance to target/goal
-	//3. Put to sleep (WAITING state) the npc with geatest distance to its target/goal
-
 	const std::vector<Npc*> npcList = MiCoMa::getInstance()->getNpcs();
 	const Map *map = Map::getInstance();
 
@@ -248,20 +271,19 @@ void Npc::movingDNpc()
 			continue;
 		}
 
-		if (getNextStepTile() == npc->getNextStepTile())
+		if (isBlockedByNpc(npc))
 		{
-			unsigned int itsDistanceToTarget = npc->getPath().size();
-			if (myDistanceToTarget < itsDistanceToTarget)
+			if (myDistanceToTarget < npc->getPath().size())
 			{
 				mNextState = MOVING_WAITING;
 				break;
 			}
-			if (getID() < npc->getID()
-				&& mPath.size() == npc->getPath().size())
+			if (hasShorterPath(npc))
 			{
 				mNextState = MOVING_WAITING;
 				break;
 			}
+
 			// We have no reason to stop
 			mNextState = FOLLOW_PATH;
 		}
@@ -460,6 +482,17 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 		closedNodes.emplace_back(current);
 	}
 	*/
+}
+
+bool Npc::isBlockedByNpc(Npc* npc)
+{
+	return getNextStepTile() == npc->getCurrentTile();
+}
+
+bool Npc::hasShorterPath(Npc* npc)
+{
+	return getID() < npc->getID()
+		&& mPath.size() == npc->getPath().size();
 }
 
 

@@ -38,6 +38,13 @@ void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
         goalMap = findBestGoalByGoal(turnInfo.npcs, targetList);
     }
 
+	//If not enough or no goals, someone needs to explore
+	if (goalMap.size() < mNpcs.size())
+	{
+		Map::getInstance()->createInfluenceMap();
+		Map::getInstance()->logInfluenceMap(turnInfo.turnNb);
+	}
+
     for (Npc* curNpc : mNpcs)
     {
         if (!curNpc->hasGoal())
