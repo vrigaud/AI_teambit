@@ -24,6 +24,7 @@ Npc::Npc(unsigned int a_id, unsigned int a_tileId)
 
 void Npc::update()
 {
+    BOT_LOGIC_NPC_LOG(mLogger, "TURN #" + std::to_string(++mTurnCount), true);
 	updateState();
 	enterStateMachine();
 }
@@ -196,7 +197,7 @@ void Npc::exploreDNpc()
 			continue;
 		}
 
-		if (isBlockedByNpc(npc))
+		if (getNextStepTile() == npc->getCurrentTile())
 		{
 			mNextState = EXPLORE_WAITING;
 			break;
@@ -331,7 +332,9 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 	while (!openedList.empty())
 	{
 		//Get smallest element
-		currentRecord = *std::min_element(std::begin(openedList), std::end(openedList));
+        currentRecord = *std::min_element(std::begin(openedList),
+            std::end(openedList), 
+            [](const NodeRecord *a, const NodeRecord *b) {  return a->mEstimatedTotalCost < b->mEstimatedTotalCost;});
 		Node* currentNode{ currentRecord->mNode };
 
 		//Found goal - yay!
@@ -377,8 +380,9 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 			//Unvited node : need a new record
 			else
 			{
-				endNodeRecord = new NodeRecord{ neighbour, 0, map->calculateDistance(neighbour->getId(), goalNodeId) };
+				endNodeRecord = new NodeRecord{ neighbour, 0, 0};
 
+                endNodeHeuristic = map->calculateDistance(neighbour->getId(), goalNodeId);
 				//Put record back in opened list
 				openedList.emplace_back(endNodeRecord);
 			}
@@ -510,7 +514,7 @@ void Npc::updatePath()
 
 bool Npc::isBlockedByNpc(Npc* npc)
 {
-	return getNextStepTile() == npc->getCurrentTile();
+	return getNextStepTile() == npc->getNextStepTile();
 }
 
 bool Npc::hasShorterPath(Npc* npc)

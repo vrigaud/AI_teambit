@@ -341,7 +341,7 @@ unsigned int Map::calculateDistance(int indexStart, int indexEnd) const
 
 	int x = nEnd->getPosition()->x - nStart->getPosition()->x;
 	int y = nEnd->getPosition()->y - nStart->getPosition()->y;
-	return (abs(x) + abs(y)) * 10;
+	return (abs(x) + abs(y));
 }
 
 EDirection Map::getDirection(unsigned int from, unsigned int to)
