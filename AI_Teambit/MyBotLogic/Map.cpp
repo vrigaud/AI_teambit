@@ -357,6 +357,17 @@ EDirection Map::getDirection(unsigned int from, unsigned int to)
     }
 }
 
+// Check if you can go from startTile to tileToGo in one turn
+bool Map::canMoveOnTile(unsigned int startTile, unsigned int tileToGo)
+{
+    if (startTile == tileToGo)
+    {
+        return true;
+    }
+    EDirection dir = getDirection(startTile, tileToGo);
+    return (Node::FORBIDDEN || getNode(tileToGo)->getType() == Node::OCCUPIED) && !getNode(startTile)->isEdgeBlocked(dir);
+}
+
 void Map::addGoalTile(unsigned int number)
 {
     if (std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))

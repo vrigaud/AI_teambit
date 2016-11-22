@@ -80,6 +80,7 @@ public:
 	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
     std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
 
+    // Getter and Setter
 	Node* getNode(unsigned int, unsigned int) const;
     Node* getNode(unsigned int) const;
     void setNodeType(unsigned int, Node::NodeType);
@@ -112,6 +113,7 @@ public:
 
     unsigned int calculateDistance(int start, int end) const;
     EDirection getDirection(unsigned int from, unsigned int to);
+    bool canMoveOnTile(unsigned int, unsigned int);
 
     void setLoggerPath();
     void logMap(unsigned);

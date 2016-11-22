@@ -233,6 +233,10 @@ void Npc::searchPath()
 			mPath.emplace_back(currentTileID);
 		}
 	}
+    else
+    { // Path existing, just check if it`s still good path
+        updatePath();
+    }
 
 	DisplayVector("\tPath to Objective Tile -> ", mPath);
 
@@ -482,6 +486,26 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 		closedNodes.emplace_back(current);
 	}
 	*/
+}
+
+void Npc::updatePath()
+{
+    BOT_LOGIC_NPC_LOG(mLogger, "\tUpdating Path ", true);
+    DisplayVector("\t\tOld path: ", mPath);
+
+    Map* pMap = Map::getInstance();
+    unsigned int oldTileID = mPath.front();
+    for (unsigned int tileId : mPath)
+    {
+        if (!pMap->canMoveOnTile(oldTileID, tileId))
+        {
+            aStar(getCurrentTile(), mObjective.mTileId);
+            DisplayVector("\t\tPath Updated : ", mPath);
+            return;
+        }
+        oldTileID = tileId;
+    }
+    BOT_LOGIC_NPC_LOG(mLogger, "\t\tNo update needed", true);
 }
 
 bool Npc::isBlockedByNpc(Npc* npc)

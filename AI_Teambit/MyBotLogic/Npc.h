@@ -122,7 +122,9 @@ private:
 	inline void movingWaiting(); // Delete ?
     inline void arrived();
     
+    // Path related functions
     void aStar(unsigned int, unsigned int);
+    void updatePath();
 
 	bool isBlockedByNpc(Npc* npc);
 	bool hasShorterPath(Npc* npc);
