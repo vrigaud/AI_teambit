@@ -168,6 +168,10 @@ void Map::updateMap(TurnInfo& turnInfo)
 	//Edges need to be updated first to avoid adding unaccessible goal
     updateEdges(turnInfo);
     updateTiles(turnInfo);
+
+    // Create influence map
+    createInfluenceMap();
+    logInfluenceMap(turnInfo.turnNb);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
