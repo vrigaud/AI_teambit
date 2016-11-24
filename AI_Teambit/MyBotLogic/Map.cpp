@@ -165,12 +165,9 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
 
 void Map::updateMap(TurnInfo& turnInfo)
 {
-    updateTiles(turnInfo);
+	//Edges need to be updated first to avoid adding unaccessible goal
     updateEdges(turnInfo);
-
-    //Test
-    createInfluenceMap();
-    logInfluenceMap(turnInfo.turnNb);
+    updateTiles(turnInfo);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
@@ -201,13 +198,11 @@ void Map::updateEdges(TurnInfo& turnInfo)
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
                         processDoorState(object, node, i);
-                        node->setCost(-2);
                     }
                     else
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WINDOW", true);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::WINDOW);
-                        node->setCost(-2);
                     }
                 }
                 else if (typeDoor != end(object.objectTypes))
@@ -243,11 +238,9 @@ void Map::updateTiles(TurnInfo& turnInfo)
     {
         auto tileInfo = info.second;
 
-        //        
         if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
         {
             setNodeType(tileInfo.tileID, Node::FORBIDDEN);
-            mNodeMap[tileInfo.tileID]->setCost(-1);
             
         }
         else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target) != tileInfo.tileAttributes.end())
@@ -341,17 +334,14 @@ Node* Map::getNode(unsigned int index) const
     return mNodeMap[index];
 }
 
-unsigned int Map::calculateDistance(int indexStart, int indexEnd)
+unsigned int Map::calculateDistance(int indexStart, int indexEnd) const
 {
-    unsigned int firstX = indexStart % mWidth;
-    unsigned int firstY = indexStart / mWidth;
-    unsigned int sndX = indexEnd % mWidth;
-    unsigned int sndY = indexEnd / mWidth;
+	Node* nStart = getNode(indexStart);
+	Node* nEnd = getNode(indexEnd);
 
-    int deltaX = static_cast<int>(sndX - firstX);
-    int deltaY = static_cast<int>(sndY - firstY);
-    int deltas = deltaY - deltaX;
-    return std::max(abs(deltaX), std::max(abs(deltaY), abs(deltas)));
+	int x = nEnd->getPosition()->x - nStart->getPosition()->x;
+	int y = nEnd->getPosition()->y - nStart->getPosition()->y;
+	return (abs(x) + abs(y));
 }
 
 EDirection Map::getDirection(unsigned int from, unsigned int to)
@@ -367,6 +357,17 @@ EDirection Map::getDirection(unsigned int from, unsigned int to)
     }
 }
 
+// Check if you can go from startTile to tileToGo in one turn
+bool Map::canMoveOnTile(unsigned int startTile, unsigned int tileToGo)
+{
+    if (startTile == tileToGo)
+    {
+        return true;
+    }
+    EDirection dir = getDirection(startTile, tileToGo);
+    return (Node::FORBIDDEN || getNode(tileToGo)->getType() == Node::OCCUPIED) && !getNode(startTile)->isEdgeBlocked(dir);
+}
+
 void Map::addGoalTile(unsigned int number)
 {
     if (std::find(begin(mGoalTiles), end(mGoalTiles), number) == end(mGoalTiles))
@@ -377,7 +378,7 @@ void Map::addGoalTile(unsigned int number)
         for (int i = N; i <= NW; ++i)
         {
             EDirection dir = static_cast<EDirection>(i);
-            EDirection invDir = inverseDirection(dir);
+
             Node* tempNode = currentNode->getNeighbour(dir);
             if (tempNode != nullptr && !currentNode->isEdgeBlocked(dir))
             {

@@ -60,6 +60,54 @@ void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
     (*mRoot)();
     _actionList = BlackBoard::getInstance()->getActionList();
 
+//=======
+//	//***NOTE : 
+//    // ATM default npc state is exploring so just change objective when we've got
+//    // a goal for the npc.
+//
+//    std::map<unsigned int, unsigned int> goalMap;
+//    std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
+//    if (targetList.size() > turnInfo.npcs.size())
+//    {
+//        goalMap = findBestGoalByNpc(turnInfo.npcs, targetList);
+//    }
+//    else
+//    {
+//        goalMap = findBestGoalByGoal(turnInfo.npcs, targetList);
+//    }
+//
+//	//If not enough or no goals, someone needs to explore
+//	if (goalMap.size() < mNpcs.size())
+//	{
+//		Map::getInstance()->createInfluenceMap();
+//		Map::getInstance()->logInfluenceMap(turnInfo.turnNb);
+//	}
+//
+//    for (Npc* curNpc : mNpcs)
+//    {
+//        if (!curNpc->hasGoal())
+//        {
+//            if (goalMap.find(curNpc->getID()) != end(goalMap))
+//            {
+//                unsigned int goalTile = goalMap[curNpc->getID()];
+//                curNpc->setGoal(goalTile);
+//            }
+//            else
+//            {
+//                curNpc->setObjective(Objective::SEARCH_MAP);
+//            }
+//        }
+//    }
+//
+//    for (Npc* npc : mNpcs)
+//    {
+//        npc->update();
+//        if (npc->getAction())
+//        {
+//            _actionList.push_back(npc->forwardAction()->Clone());
+//        }
+//    }
+//>>>>>>> dev
 }
 
 std::map<unsigned int, unsigned int> MiCoMa::findBestGoalByNpc(const std::map<unsigned int, NPCInfo>& npcInfo, std::vector<unsigned int>& targetList)

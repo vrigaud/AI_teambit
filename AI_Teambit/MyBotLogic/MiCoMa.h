@@ -48,7 +48,6 @@ public :
 
     void init(const LevelInfo&);
     void update(const TurnInfo&, std::vector<Action*>&);
-
     std::vector<Npc*> getNpcs() const noexcept
     {
         return mNpcs;
