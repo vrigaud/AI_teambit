@@ -49,6 +49,25 @@ SET( AIBOT_HEADERS
 	MyBotLogic/Npc.h
 	MyBotLogic/LoggerPath.h
 	MyBotLogic/Objective.h
+
+	#BehaviourTree
+	MyBotLogic/BehaviourTree/BaseBloc.h
+	MyBotLogic/BehaviourTree/BlackBoard.h
+	MyBotLogic/BehaviourTree/BlocAction
+	MyBotLogic/BehaviourTree/BlocComposite.h
+	MyBotLogic/BehaviourTree/BlocDecorator.h
+	MyBotLogic/BehaviourTree/BlocFail.h
+	MyBotLogic/BehaviourTree/BlocFindBGBG.h
+	MyBotLogic/BehaviourTree/BlocFindBGBNpc.h
+	MyBotLogic/BehaviourTree/BlocHasGoal.h
+	MyBotLogic/BehaviourTree/BlocInvert.h
+	MyBotLogic/BehaviourTree/BlocLoop.h
+	MyBotLogic/BehaviourTree/BlocRoot.h
+	MyBotLogic/BehaviourTree/BlocSelect.h
+	MyBotLogic/BehaviourTree/BlocSequence.h
+	MyBotLogic/BehaviourTree/BlocSuccess.h
+	MyBotLogic/BehaviourTree/BlocUpdateActionList.h
+	MyBotLogic/BehaviourTree/GeneralAction.h
 )
 
 SET( AIBOT_SRC 

@@ -18,7 +18,7 @@ BehaviourTree::BaseBloc* getBlocUpdateActionList()
             npc->update();
             if (npc->getAction())
             {
-                _actionList.push_back(npc->getAction()->Clone());
+                _actionList.push_back(npc->forwardAction()->Clone());
             }
         }
         BlackBoard::getInstance()->setActionList(_actionList);
