@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 
@@ -40,9 +41,14 @@ class Map : Singleton
     std::vector<Node*> mNodeMap;
     std::vector<unsigned int> mGoalTiles;
 	unsigned int mInfluenceRange;
+    int mVisionRange;
 
 	std::map<unsigned, bool> mKnownTilesAndVisitedStatus;
 	std::vector<Node*> mInterestingNodes;
+
+    // Zone related attribute
+    std::vector<bool> mWasDiffused;
+    std::unordered_map<unsigned int, bool> mZonesClosedStatus;
 
     // Log stuff
     Logger mLogger;
@@ -72,7 +78,7 @@ private:
 
 	// Zone diffusion and management
 	void diffuseZone(const unsigned int startTileID);
-	void diffuseZoneRec(const unsigned int currentZoneID, const unsigned int startTileID, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+	void diffuseZoneRec(const unsigned int currentZoneID, const Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
 
     // Influence methods
 	void propagateInfluence();

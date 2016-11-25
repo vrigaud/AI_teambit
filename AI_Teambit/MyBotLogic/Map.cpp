@@ -5,6 +5,7 @@
 #include "LoggerPath.h"
 #include <Math.h>
 #include <algorithm>
+#include <map>
 
 Map Map::mInstance;
 unsigned int Map::mGreatestZoneID = 0;
@@ -29,8 +30,7 @@ void Map::setLoggerPath()
 	BOT_LOGIC_MAP_LOG(mLoggerEdges, " 0 - N | 1 - NE | 2 - E | 3 - SE | 4 - S | 5 - SW | 6 - W | 7 - NW \n", true);
 
 	BOT_LOGIC_MAP_LOG(mLoggerGalacticZones, "WELCOME TO THE GALACTIC ZONES LOGGER!\n", true);
-	BOT_LOGIC_MAP_LOG(mLoggerEdges, "Configure", true);
-	BOT_LOGIC_MAP_LOG(mLoggerGalacticZones, "First line : Tile IDs \nSecond line : Zone IDs", true);
+	BOT_LOGIC_MAP_LOG(mLoggerGalacticZones, "Configure", true);
 }
 
 void Map::initMap(const LevelInfo& levelInfo)
@@ -38,6 +38,7 @@ void Map::initMap(const LevelInfo& levelInfo)
 	setHeight(levelInfo.rowCount);
 	setWidth(levelInfo.colCount);
 	setInfluenceRange(std::max(levelInfo.visionRange + 2, 4));
+    mVisionRange = levelInfo.visionRange;
 	unsigned int countIndex = 0;
 	for (int i = 0; i < mHeight; ++i)
 	{
@@ -55,6 +56,8 @@ void Map::initMap(const LevelInfo& levelInfo)
 
 void Map::initZones(std::map<unsigned int, NPCInfo> npcsInfo)
 {
+    mWasDiffused.resize(mHeight * mWidth);
+    mZonesClosedStatus.reserve(50); // 50 because we have memory! 
 	for (auto npc : npcsInfo)
 	{
 		getNode(npc.second.tileID)->setZoneID(++mGreatestZoneID);
@@ -275,6 +278,13 @@ void Map::updateTiles(TurnInfo& turnInfo)
 
 void Map::updateZones(TurnInfo& turnInfo)
 {
+    std::fill(begin(mWasDiffused), end(mWasDiffused), false);
+
+    for (auto npc : turnInfo.npcs)
+    {
+        mZonesClosedStatus[getNode(npc.second.tileID)->getZoneID()] = true;
+    }
+
 	for (auto npc : turnInfo.npcs)
 	{
 		diffuseZone(npc.second.tileID);
@@ -284,20 +294,20 @@ void Map::updateZones(TurnInfo& turnInfo)
 void Map::diffuseZone(const unsigned int startTileID)
 {
 	std::set<Node*, NodeZoneIDComparator> diffusionOpenNodes{};
-	diffusionOpenNodes.emplace(getNode(startTileID));
+    diffusionOpenNodes.emplace(getNode(startTileID));
 
 	std::set<Node*>::iterator currentNodeIT{ diffusionOpenNodes.begin() };
 	do
 	{
-		diffuseZoneRec((*currentNodeIT)->getZoneID(), (*currentNodeIT)->getId(), diffusionOpenNodes);
+		diffuseZoneRec((*currentNodeIT)->getZoneID(), (*currentNodeIT), diffusionOpenNodes);
 		currentNodeIT = diffusionOpenNodes.upper_bound(*currentNodeIT);
 
 	} while (currentNodeIT != diffusionOpenNodes.end());
 }
 
-void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int startTileID, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes)
+void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNode, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes)
 {
-	Node* currentNode = getNode(startTileID);
+    mWasDiffused[currentNode->getId()] = true;
 
 	for (int i = N; i <= NW; ++i)
 	{
@@ -307,38 +317,62 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 			continue;
 		}
 
+        // Eval
+        if (currentNode->getId() == 16)
+        {
+            auto lol = 5;
+        }
 		unsigned int nZoneID{ neighbour->getZoneID() };
 		if (nZoneID)
 		{
 			if (nZoneID == currentZoneID)
 			{
-				/*if(node.diffusionDist < currDist)*/
-				{
-					diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
+                if(!mWasDiffused[neighbour->getId()])
+                {
+					diffuseZoneRec(currentZoneID, neighbour, diffusionOpenNodes);
 				}
+                continue;
 			}
-			if (currentNode->isEdgeBlocked(static_cast<EDirection>(i)) ||
-				neighbour->getType() == Node::FORBIDDEN ||
-				neighbour->getType() == Node::NONE)
+
+			if (neighbour->getType() == Node::NONE)
 			{
+                if (!currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
+                {
+                    mZonesClosedStatus[currentZoneID] = false;
+                }
 				continue;
 			}
+
+            if (neighbour->getType() == Node::FORBIDDEN ||
+                currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
+            {
+                continue;
+            }
 
 			if (currentZoneID < nZoneID)
 			{
 				neighbour->setZoneID(currentZoneID);
-				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
-				continue;
+				diffuseZoneRec(currentZoneID, neighbour, diffusionOpenNodes);
+				//continue;
 			}
+            continue;
 		}
 
-		if (neighbour->getType() == Node::NONE ||
-			neighbour->getType() == Node::FORBIDDEN)
+        // Not Eval
+		if (neighbour->getType() == Node::NONE)
 		{
 			++mGreatestZoneID;
 			neighbour->setZoneID(mGreatestZoneID);
-			/*diffusionClosedZones[currentZoneID] = false;*/
+            if (!currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
+            {
+                mZonesClosedStatus[currentZoneID] = false;
+            }
 		}
+        else if (neighbour->getType() == Node::FORBIDDEN)
+        {
+            ++mGreatestZoneID;
+            neighbour->setZoneID(mGreatestZoneID);
+        }
 		else
 		{
 			if (currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
@@ -350,10 +384,9 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 			else
 			{
 				neighbour->setZoneID(currentZoneID);
-				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
+				diffuseZoneRec(currentZoneID, neighbour, diffusionOpenNodes);
 			}
 		}
-
 	}
 }
 
@@ -565,9 +598,17 @@ void Map::logZones(const unsigned int nbTurn)
 
 	// Printing some infos
 	myLog += "\tGreatest Galatic Zone : " + std::to_string(mGreatestZoneID) + "\n\n";
+    myLog += "\t Closed Zone(s) : \n\t\t";
+    for (auto zoneZ : mZonesClosedStatus)
+    {
+        if (zoneZ.second)
+        {
+            myLog += std::to_string(zoneZ.first) + " - ";
+        }
+    }
 
 	// Printing the map
-	myLog += "Galactic Zones : \n\n";
+	myLog += "\n\nGalactic Zones : \n\n";
 	unsigned int currentTileId{};
 	for (int row = 0; row < mHeight; ++row)
 	{

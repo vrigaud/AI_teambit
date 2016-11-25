@@ -127,6 +127,7 @@ public:
     }
 
 	unsigned int getZoneID() const { return mZoneID; }
+
 	void setZoneID(unsigned int val) { mZoneID = val; }
 
     bool isDoorOpen(const EDirection& dir)
@@ -144,7 +145,7 @@ public:
         mNeighbours[dir] = p;
     }
 
-    Node* getNeighbour(const EDirection& dir)
+    Node* getNeighbour(const EDirection& dir)const 
     {
         return mNeighbours[dir];
     }
@@ -152,16 +153,6 @@ public:
     EdgeData::EdgeType getEdgeType(const EDirection& dir) const
     {
         return static_cast<EdgeData::EdgeType>(mEdges[dir].mEdgeType);
-    }
-
-    float getInfluence(const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP) const
-    {
-        return mInfluence.mInfluences[aType];
-    }
-
-    void setInfluence(float inf, const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP)
-    {
-        mInfluence.mInfluences[aType] = inf;
     }
 
     void setParent(Node* parent)
@@ -172,6 +163,18 @@ public:
     Node* getParent() const noexcept
     {
         return mParent;
+    }
+    
+    
+    // Influence functions
+    float getInfluence(const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP) const
+    {
+        return mInfluence.mInfluences[aType];
+    }
+
+    void setInfluence(float inf, const InfluenceData::InfluenceType& aType = InfluenceData::INFLUENCE_MAP)
+    {
+        mInfluence.mInfluences[aType] = inf;
     }
 };
 
