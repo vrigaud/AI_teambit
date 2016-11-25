@@ -330,6 +330,7 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 			neighbour->getType() == Node::FORBIDDEN)
 		{
 			++mGreatestZoneID;
+			neighbour->setZoneID(mGreatestZoneID);
 		}
 		else
 		{
