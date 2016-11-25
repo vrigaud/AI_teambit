@@ -310,8 +310,14 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 		unsigned int nZoneID{ neighbour->getZoneID() };
 		if (nZoneID)
 		{
-			if (nZoneID == currentZoneID ||
-				currentNode->isEdgeBlocked(static_cast<EDirection>(i)) ||
+			if (nZoneID == currentZoneID)
+			{
+				/*if(node.diffusionDist < currDist)*/
+				{
+					diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
+				}
+			}
+			if (currentNode->isEdgeBlocked(static_cast<EDirection>(i)) ||
 				neighbour->getType() == Node::FORBIDDEN ||
 				neighbour->getType() == Node::NONE)
 			{
@@ -321,7 +327,7 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 			if (currentZoneID < nZoneID)
 			{
 				neighbour->setZoneID(currentZoneID);
-				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes);
+				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
 				continue;
 			}
 		}
@@ -331,6 +337,7 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 		{
 			++mGreatestZoneID;
 			neighbour->setZoneID(mGreatestZoneID);
+			/*diffusionClosedZones[currentZoneID] = false;*/
 		}
 		else
 		{
@@ -343,7 +350,7 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const unsigned int st
 			else
 			{
 				neighbour->setZoneID(currentZoneID);
-				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes);
+				diffuseZoneRec(currentZoneID, neighbour->getId(), diffusionOpenNodes/*, currDist--*/);
 			}
 		}
 
@@ -564,30 +571,6 @@ void Map::logZones(const unsigned int nbTurn)
 	unsigned int currentTileId{};
 	for (int row = 0; row < mHeight; ++row)
 	{
-		//if (row % 2)
-		//{
-		//	myLog += "   ";
-		//}
-		////Printing TileID
-		//for (int col = 0; col < mWidth; ++col)
-		//{
-		//	Node* tempNode = getNode(currentTileId++);
-		//	if (tempNode)
-		//	{
-		//		std::string sTID = std::to_string(tempNode->getId());
-		//		for (int i{}; i < 5 - sTID.size(); i++)
-		//		{
-		//			myLog += "-";
-		//		}
-		//		myLog += sTID;
-		//	}
-		//	myLog += "  ";
-		//}
-		//myLog += "\n";
-
-		////Restart from first tile of the current line
-		//currentTileId -= mWidth;
-
 		if (row % 2)
 		{
 			myLog += "   ";
