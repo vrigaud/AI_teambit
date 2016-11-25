@@ -3,6 +3,7 @@
 
 #include "Globals.h"
 #include <list>
+#include <vector>
 
 
 struct Position
@@ -26,6 +27,9 @@ struct EdgeData
     } mEdgeType;
     bool mBlocking;
     bool mOpen;
+
+	//TODO - add struct Door : doorID, adjacent tiles' ID, controllers list
+
 
     EdgeData()
         : mEdgeType{ FREE }, mBlocking{ false }, mOpen{ false }
@@ -73,6 +77,9 @@ private:
     Node* mNeighbours[NBNEIGHBOURS] = { nullptr };
 
     InfluenceData mInfluence;
+
+	//TODO - Device ID
+	int mDeviceID;
 
     // TODO - Add close or open attributes
     //bool m_knowEverythingAboutIt;

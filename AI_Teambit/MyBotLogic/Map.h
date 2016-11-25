@@ -44,6 +44,10 @@ class Map : Singleton
 	std::map<unsigned, bool> mKnownTilesAndVisitedStatus;
 	std::vector<Node*> mInterestingNodes;
 
+	//TODO - Add pressure plates list
+	//TODO - Add doors list
+
+
     // Log stuff
     Logger mLogger;
     Logger mLoggerEdges;

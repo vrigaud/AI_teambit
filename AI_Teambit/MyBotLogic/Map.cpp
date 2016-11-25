@@ -202,6 +202,9 @@ void Map::updateEdges(TurnInfo& turnInfo)
 	BOT_LOGIC_MAP_LOG(mLoggerEdges, "\nUpdate Edges", true);
 	for (std::pair<unsigned, ObjectInfo> info : turnInfo.objects)
 	{
+		//TODO - update pressure plates
+		//TODO - possibly need to rename method to : updateObjects
+
 		Node* node = getNode(info.second.tileID);
 		for (int i = N; i <= NW; ++i)
 		{

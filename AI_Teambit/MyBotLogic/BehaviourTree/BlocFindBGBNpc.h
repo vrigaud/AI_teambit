@@ -14,7 +14,8 @@ BehaviourTree::BaseBloc* getBlocFindBGBNpc()
 
     auto findBGBNpcLambda = []()
     {
-        std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
+		Map *map = Map::getInstance();
+        std::vector<unsigned int> targetList = map->getGoalIDs();
         std::map<unsigned int, NPCInfo> npcInfo = BlackBoard::getInstance()->getTurnInfo().npcs;
         std::map<unsigned int, unsigned int> tempGoalMap{};
 
@@ -30,12 +31,16 @@ BehaviourTree::BaseBloc* getBlocFindBGBNpc()
             std::vector<unsigned>::iterator goalIt = begin(targetList);
             for (; goalIt != end(targetList); ++goalIt)
             {
-                float distance = Map::getInstance()->calculateDistance(npc.second.tileID, *goalIt);
-                if (distance < bestDist)
-                {
-                    goalId = *goalIt;
-                    bestDist = distance;
-                }
+				//If npc & goal are in the same zone
+				if (map->getNode(goalId)->getZoneID() == map->getNode(npc.second.tileID)->getZoneID())
+				{
+					float distance = map->calculateDistance(npc.second.tileID, *goalIt);
+					if (distance < bestDist)
+					{
+						goalId = *goalIt;
+						bestDist = distance;
+					}
+				}
             }
             tempGoalMap[npc.second.npcID] = goalId;
             targetList.erase(std::find(begin(targetList), end(targetList), goalId));
