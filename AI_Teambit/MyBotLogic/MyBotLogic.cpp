@@ -39,7 +39,7 @@ void MyBotLogic::Load()
 
 void MyBotLogic::Init(LevelInfo& _levelInfo)
 {
-    Map::getInstance()->initMap(_levelInfo.rowCount, _levelInfo.colCount, _levelInfo.visionRange);
+    Map::getInstance()->initMap(_levelInfo);
     MiCoMa::getInstance()->init(_levelInfo);
 }
 

@@ -425,6 +425,7 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 		delete nr;
 
 	//***v1.0 : K-E & Louis
+	//TODO : update to make this work with v2.0
 	/*
 	//We need a clear path whether we fail or not
 	mPath.clear();

@@ -1,6 +1,6 @@
 #ifndef NODE_HEADER
 #define NODE_HEADER
-#include <cmath>
+
 #include "Globals.h"
 #include <list>
 
@@ -46,6 +46,7 @@ struct InfluenceData
     {}
 };
 
+struct NodeZoneIDComparator;
 class Node
 {
 public:
@@ -62,25 +63,24 @@ public:
     enum { NBNEIGHBOURS = 8 };
 
 private:
-
-
     Position* mPos;
     unsigned int mID;
     NodeType mType;
     EdgeData mEdges[8]{};
     Node* mParent;
+	unsigned int mZoneID;
 
-    
     Node* mNeighbours[NBNEIGHBOURS] = { nullptr };
-    //unsigned int m_npcId = {0};
 
     InfluenceData mInfluence;
 
-    // TODO - Add zones for tile
     // TODO - Add close or open attributes
     //bool m_knowEverythingAboutIt;
 
+	friend NodeZoneIDComparator;
+
 public:
+
 
     Node(int xVal, int yVal, unsigned int idVal, NodeType typeVal);
 
@@ -126,6 +126,9 @@ public:
         }
     }
 
+	unsigned int getZoneID() const { return mZoneID; }
+	void setZoneID(unsigned int val) { mZoneID = val; }
+
     bool isDoorOpen(const EDirection& dir)
     {
         return mEdges[dir].mOpen;
@@ -170,6 +173,14 @@ public:
     {
         return mParent;
     }
+};
+
+struct NodeZoneIDComparator
+{
+	bool operator() (const Node* n0, const Node* n1) const
+	{
+		return n0->getZoneID() < n1->getZoneID();
+	}
 };
 
 #endif // NODE_HEADER

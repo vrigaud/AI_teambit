@@ -4,11 +4,10 @@
 #include "Node.h"
 #include "Globals.h"
 #include "Singleton.h"
-#include "NPCInfo.h"
-
 #include "Logger.h"
 #include <algorithm>
 #include <map>
+#include <set>
 #include <vector>
 
 // For debug only
@@ -24,13 +23,17 @@
 #define BOT_LOGIC_MAP_LOG(logger, text, autoEndLine) 0
 #endif
 
+struct LevelInfo;
 struct TileInfo;
 struct ObjectInfo;
 struct TurnInfo;
+struct NPCInfo;
 
 class Map : Singleton
 {
     static Map mInstance;
+	static unsigned int mGreatestZoneID;
+
     unsigned int mWidth;
     unsigned int mHeight;
 
@@ -45,15 +48,19 @@ class Map : Singleton
     Logger mLogger;
     Logger mLoggerEdges;
     Logger mLoggerInfluence;
+	Logger mLoggerGalacticZones;
 
 private:
-    Map() : mWidth(0), mHeight(0)
+	Map() : mWidth(0), mHeight(0)
     {}
+
     // Graph creation
     void createNode(Node*);
     void connectNodes();
+	void initZones(std::map<unsigned int, NPCInfo> npcsInfo);
     void updateEdges(TurnInfo&);
     void updateTiles(TurnInfo&);
+	void updateZones(TurnInfo&);
 
     // Edges update 
     void processDoorState(ObjectInfo &object, Node* node, int i);
@@ -63,21 +70,25 @@ private:
         return static_cast<EDirection>((dir + 4) % 8);
     }
 
+	// Zone diffusion and management
+	void diffuseZone(const unsigned int startTileID);
+	void diffuseZoneRec(const unsigned int currentZoneID, const unsigned int startTileID, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+
+    // Influence methods
+	void propagateInfluence();
+	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
+
 public:
     static Map *getInstance() noexcept
     {
         return &mInstance;
     }
     
-    void initMap(int, int, int = 0);
+    void initMap(const LevelInfo&);
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
     const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
-
-    // Influence methods
-	void propagateInfluence();
-	void propagate(Node * myNode, unsigned curDist, unsigned maxDist, float initialInfluence) const;
     std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
 
     // Getter and Setter
@@ -88,7 +99,7 @@ public:
     {
         return mWidth;
     }
-    void setWidth(unsigned int w)
+    void setWidth(const unsigned int w)
     {
         mWidth = w;
     }
@@ -96,7 +107,7 @@ public:
     {
         return mHeight;
     }
-    void setHeight(unsigned int h)
+    void setHeight(const unsigned int h)
     {
         mHeight = h;
     }
@@ -104,7 +115,7 @@ public:
     {
         return mInfluenceRange;
     }
-    void setInfluenceRange(unsigned int range)
+    void setInfluenceRange(const unsigned int range)
     {
         BOT_LOGIC_MAP_LOG(mLoggerInfluence, "\t Influence Range = " + std::to_string(range), true);
         mInfluenceRange = range;
@@ -116,8 +127,9 @@ public:
     bool canMoveOnTile(unsigned int, unsigned int);
 
     void setLoggerPath();
-    void logMap(unsigned);
-    void logInfluenceMap(unsigned nbTurn);
+    void logMap(const unsigned int);
+	void logZones(const unsigned int);
+    void logInfluenceMap(const unsigned int nbTurn);
 };
 
 #endif // MAP_HEADER
