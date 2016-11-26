@@ -537,6 +537,20 @@ void Map::addGoalTile(unsigned int number)
 	}
 }
 
+unsigned int Map::getNeighborTileIndex(unsigned int iCurrentNode, const EDirection& dir)
+{
+	Node* currentNode = getNode(iCurrentNode);
+
+	if (nullptr != currentNode)
+	{
+		Node* tempNode = currentNode->getNeighbour(dir);
+		if (tempNode != nullptr && !currentNode->isEdgeBlocked(dir))
+		{
+			return tempNode->getId();
+		}
+	}
+	return iCurrentNode;
+}
 
 //----------------------------------------------------------------------
 // LOGGER

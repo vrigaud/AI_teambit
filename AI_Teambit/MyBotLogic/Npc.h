@@ -86,8 +86,28 @@ public:
 	unsigned int getObjectiveTile() { return mObjective.mTileId; }
 	//Returns the ID of the next tile on which the NPC is supposed to move
 	//Returns the ID of the current tile if no move expected
-	unsigned int getNextStepTile() { return (mPath.size() == 1 ? mPath.back() : mPath[mPath.size() - 2]); }
-	unsigned int getCurrentTile() { return mPath.back(); }
+	unsigned int getNextStepTile() 
+	{ 
+		if(mPath.size())
+		{
+			return (mPath.size() == 1 ? mPath.back() : mPath[mPath.size() - 2]); 
+		}
+		else
+		{
+			return getCurrentTile();
+		}
+	}
+	unsigned int getCurrentTile() 
+	{
+		if(mPath.size())
+		{
+			return mPath.back(); 
+		}
+		else
+		{
+			return mCurrentTile;
+		}
+	}
 
 	std::vector<unsigned int> getPath() { return mPath; }
 	Action* getAction() { return mAction; }
@@ -99,6 +119,7 @@ public:
 	}
 
 private:
+	unsigned int mCurrentTile{};
     void updateState();
     void enterStateMachine();
 

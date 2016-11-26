@@ -93,6 +93,7 @@ public:
     void initMap(const LevelInfo&);
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
+	unsigned int getNeighborTileIndex(unsigned int iCurrentNode, const EDirection & dir);
     const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
     std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
