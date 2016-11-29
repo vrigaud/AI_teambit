@@ -2,15 +2,15 @@
 #define BLOCFINDBGBG_H
 
 #include "GeneralAction.h"
-#include "NPCInfo.h"
+#include "..\Map.h"
 
 /* Finds best goal for each Npc, by looking in targets list*/
-BehaviourTree::BaseBloc* getBlocFindBGBG()
+BehaviourTree::BaseBloc* getBlocFindBGBG(BlackBoard &bboard)
 {
-    auto findBGBGLambda = []()
+	auto findBGBGLambda = [&bboard]()
     {
         std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
-        std::map<unsigned int, NPCInfo> npcInfo = BlackBoard::getInstance()->getTurnInfo().npcs;
+		std::map<unsigned int, NPCInfo> npcInfo = bboard.getTurnInfo().npcs;
         std::map<unsigned int, unsigned int> tempGoalMap{};
 
         for (unsigned goal : targetList)
@@ -33,7 +33,7 @@ BehaviourTree::BaseBloc* getBlocFindBGBG()
             npcInfo.erase(npcId);
         }
 
-        BlackBoard::getInstance()->setGoalMap(tempGoalMap);
+		bboard.setGoalMap(tempGoalMap);
         return BehaviourTree::result::SUCCESS;
     };
     return BehaviourTree::createAction(findBGBGLambda);

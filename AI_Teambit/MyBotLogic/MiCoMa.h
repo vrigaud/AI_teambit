@@ -16,10 +16,10 @@
 #define BOT_LOGIC_MICOMA_LOG(logger, text, autoEndLine) 0
 #endif
 
-#include <vector>
 #include <algorithm>
 #include <map>
-#include "BehaviourTree/BlocSequence.h"
+#include <vector>
+#include "BehaviourTree/BlocRoot.h"
 
 
 
@@ -37,7 +37,7 @@ class MiCoMa : Singleton
 	std::map<unsigned int, unsigned int> findBestGoalByGoal(std::map<unsigned int, NPCInfo> npcInfo, const std::vector<unsigned int>& targetList);
 	
 	Logger mLogger;
-    BehaviourTree::BlocSequence* mRoot;
+	BehaviourTree::BehaviourTreeObject mBTree;
 
 public :
     static MiCoMa* getInstance()

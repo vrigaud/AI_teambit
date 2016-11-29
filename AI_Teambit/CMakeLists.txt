@@ -80,6 +80,8 @@ SET( AIBOT_SRC
 
 	#MY_BOT
 	MyBotLogic/MyBotLogic.cpp
+	MyBotLogic/BehaviourTree/BlackBoard.cpp
+	MyBotLogic/BehaviourTree/BehaviourTree.cpp
 	MyBotLogic/Map.cpp
 	MyBotLogic/Node.cpp
 	MyBotLogic/MiCoMa.cpp

@@ -27,13 +27,13 @@ namespace BehaviourTree
             iterationCount = newCount;
         }
 
-        virtual result operator()()
+		virtual result operator()(BlackBoard &bboard)
         {
             result state;
 
             for (size_t iter = 0; iter < iterationCount; ++iter)
             {
-                state = (*onlyChild)();
+				state = (*onlyChild)(bboard);
             }
 
             return state;

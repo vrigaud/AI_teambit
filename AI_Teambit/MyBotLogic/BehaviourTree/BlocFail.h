@@ -13,9 +13,9 @@ namespace BehaviourTree
             BlocDecorator{ child }
         {}
 
-        virtual result operator()()
+		virtual result operator()(BlackBoard &bboard)
         {
-            (*onlyChild)();
+            (*onlyChild)(bboard);
             return result::FAIL;
         }
     };

@@ -4,8 +4,6 @@
 
 #include "BaseBloc.h"
 
-#include <algorithm>
-
 namespace BehaviourTree
 {
     class BlocDecorator : public BaseBloc
@@ -44,7 +42,7 @@ namespace BehaviourTree
 
         void disconnect(size_t iter) {}
 
-        virtual result operator()() = 0;
+        virtual result operator()(BlackBoard &bboard) = 0;
     };
 }
 
