@@ -53,7 +53,8 @@ SET( AIBOT_HEADERS
 	#BehaviourTree
 	MyBotLogic/BehaviourTree/BaseBloc.h
 	MyBotLogic/BehaviourTree/BlackBoard.h
-	MyBotLogic/BehaviourTree/BlocAction
+	MyBotLogic/BehaviourTree/BehaviourTree.h
+	MyBotLogic/BehaviourTree/BlocAction.h
 	MyBotLogic/BehaviourTree/BlocComposite.h
 	MyBotLogic/BehaviourTree/BlocDecorator.h
 	MyBotLogic/BehaviourTree/BlocFail.h
@@ -62,7 +63,6 @@ SET( AIBOT_HEADERS
 	MyBotLogic/BehaviourTree/BlocHasGoal.h
 	MyBotLogic/BehaviourTree/BlocInvert.h
 	MyBotLogic/BehaviourTree/BlocLoop.h
-	MyBotLogic/BehaviourTree/BlocRoot.h
 	MyBotLogic/BehaviourTree/BlocSelect.h
 	MyBotLogic/BehaviourTree/BlocSequence.h
 	MyBotLogic/BehaviourTree/BlocSuccess.h
