@@ -11,7 +11,9 @@
 using namespace std;
 
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
-	: mCurrentState{}, mNextState{}, mId{ a_id }, mTurnCount{ 0 }, mPath{ a_tileId },
+	: mCurrentState{}, mNextState{}, mId{ a_id }, mCurrentTile{ a_tileId }, mTurnCount {
+	0
+}, mPath{ a_tileId },
 	mHasGoal{}, mAction{}
 {
 #ifdef BOT_LOGIC_DEBUG_NPC
@@ -210,8 +212,9 @@ void Npc::move()
 	BOT_LOGIC_NPC_LOG(mLogger, "-Move", true);
 	// TODO - just push action in the list?
 
-	mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() - 2]));
-	mPath.pop_back();
+	mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() > 1 ? mPath.size() - 2 : 0]));
+	if(mPath.size())
+		mPath.pop_back();
 
 	mNextState = MOVE;
 }
@@ -248,15 +251,27 @@ void Npc::followPath()
 {
 	BOT_LOGIC_NPC_LOG(mLogger, "-FollowPath", true);
 
-
-	mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() - 2]));
-	mPath.pop_back();
-
-	mNextState = FOLLOW_PATH;
-
-	if (mPath.back() == mGoal)
+	if (mPath.size() > 1)
 	{
-		mNextState = ARRIVED;
+
+		EDirection direction = Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() > 1 ? mPath.size() - 2 : 0]);
+
+		mAction = new Move(mId, direction);
+
+		//TODO: EM: A DISCUTER. La tuile courrante devient celle apres la commande MOVE est envoyee?
+		//unsigned int newTile = Map::getInstance()->getTileNeighborIndex(mCurrentTile, direction);
+		//mCurrentTile = newTile;
+
+		mPath.pop_back();
+
+		mNextState = FOLLOW_PATH;
+	
+
+		if (mPath.back() == mGoal)
+		{
+			mNextState = ARRIVED;
+		}
+
 	}
 }
 
@@ -425,6 +440,7 @@ void Npc::aStar(unsigned int startNodeId, unsigned int goalNodeId)
 		delete nr;
 
 	//***v1.0 : K-E & Louis
+	//TODO : update to make this work with v2.0
 	/*
 	//We need a clear path whether we fail or not
 	mPath.clear();
@@ -503,7 +519,7 @@ void Npc::updatePath()
     {
         if (!pMap->canMoveOnTile(oldTileID, tileId))
         {
-            aStar(getCurrentTile(), mObjective.mTileId);
+			aStar(getCurrentTile(), mObjective.mTileId);
             DisplayVector("\t\tPath Updated : ", mPath);
             return;
         }
