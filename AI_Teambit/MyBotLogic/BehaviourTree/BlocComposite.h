@@ -52,7 +52,7 @@ namespace BehaviourTree
             children.erase(children.begin() + iter);
         }
 
-        virtual result operator()() = 0;
+        virtual result operator()(BlackBoard &bboard) = 0;
 
     };
 }

@@ -2,18 +2,19 @@
 #define BLOCHASGOAL_H
 
 #include "GeneralAction.h"
-#include "..\Npc.h"
 #include "..\MiCoMa.h"
-#include "Blackboard.h"
+#include "..\Npc.h"
+
 
 /* Sets an objective to each Npc.
 If no goal exists, he gets in the exploration mode. */
-BehaviourTree::BaseBloc* getBlocHasGoal()
+BehaviourTree::BaseBloc* getBlocHasGoal(BlackBoard &bboard)
 {
-    auto forHasGoalLambda = []()
+    auto forHasGoalLambda = [&bboard]()
     {
-        std::map<unsigned int, unsigned int> goalMap = BlackBoard::getInstance()->getGoalMap();
-        for (Npc* curNpc : MiCoMa::getInstance()->getNpcs())
+        std::map<unsigned int, unsigned int> goalMap = bboard.getGoalMap();
+		auto npcs = MiCoMa::getInstance()->getNpcs();
+        for (Npc* curNpc : npcs)
         {
             if (!curNpc->hasGoal())
             {

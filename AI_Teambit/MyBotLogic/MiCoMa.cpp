@@ -6,15 +6,6 @@
 #include "Globals.h"
 #include "Npc.h"
 
-#include "MyBotLogic/BehaviourTree/BaseBloc.h"
-#include "MyBotLogic/BehaviourTree/BlocAction.h"
-#include "MyBotLogic/BehaviourTree/BlocSelect.h"
-#include "MyBotLogic/BehaviourTree/BlocSequence.h"
-#include "MyBotLogic/BehaviourTree/BlocUpdateActionList.h"
-#include "MyBotLogic/BehaviourTree/BlocHasGoal.h"
-#include "MyBotLogic/BehaviourTree/BlocFindBGBG.h"
-#include "MyBotLogic/BehaviourTree/BlocFindBGBNpc.h"
-
 using namespace BehaviourTree;
 
 void MiCoMa::init(const LevelInfo& levelInfos)
@@ -31,34 +22,14 @@ void MiCoMa::init(const LevelInfo& levelInfos)
         mNpcs.push_back(new Npc(npc.second.npcID, npc.second.tileID));
     }
 
-    mRoot = new BehaviourTree::BlocSequence{};
-
-#pragma region BasicGoalAssigment_SubTree
-    /* Sub-tree #1 : basic goal assignment */
-    BlocSelect* findGoalSelect = new BlocSelect();
-    BlocSequence* sequence = new BlocSequence();
-    findGoalSelect->connect(*getBlocFindBGBNpc());
-    findGoalSelect->connect(*getBlocFindBGBG());
-
-    mRoot->connect(*findGoalSelect);
-    mRoot->connect(*getBlocHasGoal());
-    mRoot->connect(*getBlocUpdateActionList());
-#pragma endregion
-
-
-    //TODO - 
-
+	mBTree.initialize(levelInfos);
 
 }
 
 void MiCoMa::update(const TurnInfo& turnInfo, std::vector<Action*>& _actionList)
 {
 
-    //mBTree.run();
-
-    BlackBoard::getInstance()->update(turnInfo);
-    (*mRoot)();
-    _actionList = BlackBoard::getInstance()->getActionList();
+    mBTree.run(turnInfo, _actionList);
 
 //=======
 //	//***NOTE : 

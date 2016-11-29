@@ -12,9 +12,9 @@ namespace BehaviourTree
             BlocDecorator{ child }
         {}
 
-        virtual result operator()()
+		virtual result operator()(BlackBoard &bboard)
         {
-            result res = (*onlyChild)();
+			result res = (*onlyChild)(bboard);
 
             switch (res)
             {

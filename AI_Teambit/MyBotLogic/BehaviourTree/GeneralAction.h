@@ -19,7 +19,7 @@ namespace BehaviourTree
             mFunctor{ functor }
         {}
 
-        result operator()()
+        result operator()(BlackBoard &bboard)
         {
             return mFunctor();
         }

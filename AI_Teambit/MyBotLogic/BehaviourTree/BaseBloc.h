@@ -1,6 +1,7 @@
 #ifndef BASEBLOC_H
 #define BASEBLOC_H
 
+#include "Blackboard.h"
 
 namespace BehaviourTree
 {
@@ -46,7 +47,7 @@ namespace BehaviourTree
         virtual void connect(BaseBloc& toConnect) = 0;
         virtual void disconnect(size_t iter) = 0;
 
-        virtual result operator()() = 0;
+        virtual result operator()(BlackBoard &bboard) = 0;
     };
 }
 
