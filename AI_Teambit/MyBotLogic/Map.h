@@ -30,19 +30,42 @@ struct ObjectInfo;
 struct TurnInfo;
 struct NPCInfo;
 class Npc;
+
+struct Controller;
+
 struct Door
 {
     unsigned int mTileId;
     EDirection mDoorDirection;
-    unsigned int mControllerId;
+    std::vector<Controller> mControllerId;
     unsigned int mIdDoor;
+
+    Door(unsigned int tileId, EDirection dir, unsigned int drId) : mTileId{ tileId }, mDoorDirection{ dir }, mControllerId{}, mIdDoor{ drId } 
+    {
+        mControllerId.reserve(10);
+    }
+
+    bool operator==(const Door& d0)
+    {
+        return mIdDoor == d0.mIdDoor;
+    }
 };
+
+//bool operator==(const Door& d0, const Door& d1)
+//{
+//    return d0.mIdDoor == d1.mIdDoor;
+//};
 
 struct Controller
 {
     unsigned int mControllerId;
     unsigned int mIdDoor;
     unsigned int mTileID;
+
+    bool operator==(const Controller& c0)
+    {
+        return mControllerId == c0.mControllerId;
+    }
 };
 
 struct Zone;
@@ -67,7 +90,6 @@ class Map : Singleton
     std::vector<bool> mWasDiffused;
     std::unordered_map<unsigned int, Zone> mZoneList;
     std::vector<Zone> mZone;
-    void ensureNode(unsigned int, Node*);
 
     // Attribute related to doors and devices
     std::vector<Door> mDoorsMap;
@@ -103,7 +125,9 @@ private:
 	// Zone diffusion and management
 	void diffuseZone(const unsigned int startTileID);
 	void diffuseZoneRec(const unsigned int currentZoneID, Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
-    void addNodeToZone(Node* n, unsigned int zoneId);
+    void ensureNode(unsigned int zoneId, Node*);
+    void ensureDoor(unsigned int zoneId, Door);
+    void ensureController(unsigned int zoneId, Controller);
 
     // Influence methods
 	void propagateInfluence();

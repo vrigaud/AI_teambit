@@ -228,6 +228,22 @@ continue;
                     {
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
+                        
+                        Door d(info.second.tileID, static_cast<EDirection>(i), info.second.objectID);
+                        for (unsigned int cntrllr : info.second.associatedControllers)
+                        {
+                            Controller c;
+                            c.mControllerId = cntrllr;
+                            c.mIdDoor = info.second.objectID;
+                            auto foundIt = turnInfo.objects.find(cntrllr);
+                            if (foundIt != end(turnInfo.objects))
+                            {
+                                c.mTileID = foundIt->second.tileID;
+                                ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                            }
+                            d.mControllerId.emplace_back(c);
+                        }
+                        ensureDoor(node->getZoneID(), d);\
                         processDoorState(object, node, i);
                     }
                     else
@@ -299,6 +315,26 @@ void Map::ensureNode(unsigned int zoneId, Node* n)
     if (find(begin(mZoneList[zoneId].mNodeOnZone), end(mZoneList[zoneId].mNodeOnZone), n) == end(mZoneList[zoneId].mNodeOnZone))
     {
         mZoneList[zoneId].mNodeOnZone.emplace_back(n);
+    }
+}
+
+void Map::ensureDoor(unsigned int zoneId, Door d)
+{
+    mZoneList[zoneId].mZoneId = zoneId;
+
+    if (find(begin(mZoneList[zoneId].mDoorOnZone), end(mZoneList[zoneId].mDoorOnZone), d) == end(mZoneList[zoneId].mDoorOnZone))
+    {
+        mZoneList[zoneId].mDoorOnZone.emplace_back(d);
+    }
+}
+
+void Map::ensureController(unsigned int zoneId, Controller c)
+{
+    mZoneList[zoneId].mZoneId = zoneId;
+
+    if (find(begin(mZoneList[zoneId].mControllerOnZone), end(mZoneList[zoneId].mControllerOnZone), c) == end(mZoneList[zoneId].mControllerOnZone))
+    {
+        mZoneList[zoneId].mControllerOnZone.emplace_back(c);
     }
 }
 
