@@ -11,9 +11,9 @@
 #include <set>
 #include <vector>
 
-// For debug only
 #include <string>
 
+// For debug only
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_MAP
 #endif
@@ -29,6 +29,23 @@ struct TileInfo;
 struct ObjectInfo;
 struct TurnInfo;
 struct NPCInfo;
+class Npc;
+struct Door
+{
+    unsigned int mTileId;
+    EDirection mDoorDirection;
+    unsigned int mControllerId;
+    unsigned int mIdDoor;
+};
+
+struct Controller
+{
+    unsigned int mControllerId;
+    unsigned int mIdDoor;
+    unsigned int mTileID;
+};
+
+struct Zone;
 
 class Map : Singleton
 {
@@ -48,7 +65,14 @@ class Map : Singleton
 
     // Zone related attribute
     std::vector<bool> mWasDiffused;
-    std::unordered_map<unsigned int, bool> mZonesClosedStatus;
+    std::unordered_map<unsigned int, Zone> mZoneList;
+    std::vector<Zone> mZone;
+    void ensureNode(unsigned int, Node*);
+
+    // Attribute related to doors and devices
+    std::vector<Door> mDoorsMap;
+    std::vector<Controller> mControllers;
+
 
     // Log stuff
     Logger mLogger;
@@ -78,7 +102,8 @@ private:
 
 	// Zone diffusion and management
 	void diffuseZone(const unsigned int startTileID);
-	void diffuseZoneRec(const unsigned int currentZoneID, const Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+	void diffuseZoneRec(const unsigned int currentZoneID, Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+    void addNodeToZone(Node* n, unsigned int zoneId);
 
     // Influence methods
 	void propagateInfluence();
@@ -137,6 +162,30 @@ public:
     void logMap(const unsigned int);
 	void logZones(const unsigned int);
     void logInfluenceMap(const unsigned int nbTurn);
+
+    std::vector<Controller> isLocallyLinked(unsigned int zoneId);
+   // void findNpcOnTheSameZone(unsigned int zoneID);
+
+};
+
+struct Zone
+{
+    unsigned int mZoneId;
+    std::vector<Door> mDoorOnZone;
+    std::vector<Controller> mControllerOnZone;
+    std::vector<Node*> mNodeOnZone;
+    bool isClosed;
+
+    Zone() : mZoneId{}
+    {
+        mDoorOnZone.reserve(5);
+        mControllerOnZone.reserve(5);
+
+        //Assumes Map is already constructed
+        mNodeOnZone.reserve(Map::getInstance()->getWidth()*Map::getInstance()->getHeight());
+
+        isClosed = false;
+    }
 };
 
 #endif // MAP_HEADER

@@ -66,7 +66,6 @@ class Npc
 
 public:
 
-
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
 
@@ -118,6 +117,7 @@ public:
 		return action;
 	}
 
+
 private:
 	unsigned int mCurrentTile{};
     void updateState();
@@ -149,6 +149,7 @@ private:
 
 	bool isBlockedByNpc(Npc* npc);
 	bool hasShorterPath(Npc* npc);
+
 };
 
 #endif // NPC_H
