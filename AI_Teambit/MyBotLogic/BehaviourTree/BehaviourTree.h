@@ -1,7 +1,6 @@
 #ifndef BLOCBEHAVIOURTREE_H
 #define BLOCBEHAVIOURTREE_H
 
-
 #include "BaseBloc.h"
 
 #include <algorithm>
@@ -59,7 +58,5 @@ namespace BehaviourTree
 
 	};
 }
-
-
 
 #endif //!BLOCBEHAVIOURTREE_H

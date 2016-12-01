@@ -9,12 +9,12 @@ namespace BehaviourTree
     {
     public:
 
-        virtual result operator()()
+		virtual result operator()(BlackBoard &bboard)
         {
 
             for (int i = 0; i < getNbChild(); ++i)
             {
-                if (((*children[i])()) == result::FAIL)
+				if (((*children[i])(bboard)) == result::FAIL)
                 {
                     return result::FAIL;
                 }

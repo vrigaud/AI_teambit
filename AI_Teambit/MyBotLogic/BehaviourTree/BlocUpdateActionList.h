@@ -1,27 +1,26 @@
 #ifndef BLOCUPDATEACTIONLIST_H
 #define BLOCUPDATEACTIONLIST_H
 
-#include "Npc.h"
 #include "GeneralAction.h"
-#include "Blackboard.h"
+#include "..\MiCoMa.h"
+#include "..\Npc.h"
 
 
-BehaviourTree::BaseBloc* getBlocUpdateActionList()
+
+BehaviourTree::BaseBloc* getBlocUpdateActionList(BlackBoard &bboard)
 {
-
-    auto forUpdateLambda = []()
+	auto forUpdateLambda = [&bboard]()
     {
-        std::vector<Action*> _actionList = BlackBoard::getInstance()->getActionList();
+		std::vector<Action*> _actionList = bboard.getActionList();
 
         for (Npc* npc : MiCoMa::getInstance()->getNpcs())
         {
             npc->update();
             if (npc->getAction())
             {
-                _actionList.push_back(npc->forwardAction()->Clone());
+                bboard.pushAction(npc->forwardAction()->Clone());
             }
         }
-        BlackBoard::getInstance()->setActionList(_actionList);
         return BehaviourTree::result::SUCCESS;
     };
 
