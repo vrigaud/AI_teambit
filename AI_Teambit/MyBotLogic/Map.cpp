@@ -142,8 +142,8 @@ void Map::propagate(Node* myNode, unsigned curDist, unsigned maxDist, float init
                 if (newInfluence > tempNode->getInfluence())
                 {
                     tempNode->setInfluence(newInfluence);
+                    propagate(tempNode, ++curDist, maxDist, initialInfluence);
                 }
-                propagate(tempNode, ++curDist, maxDist, initialInfluence);
             }
         }
     }
