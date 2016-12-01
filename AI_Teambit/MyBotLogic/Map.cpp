@@ -217,7 +217,7 @@ void Map::updateEdges(TurnInfo& turnInfo)
                 {
                     node->setEdgeType(static_cast<EDirection>(i), EdgeData::WALL);
                     BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WALL", true);
-continue;
+                    //continue;
                 }
 
                 auto typeWindow = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_Window);
@@ -232,26 +232,28 @@ continue;
                         if (node->getZoneID())
                         {
                             auto otherNode = node->getNeighbour(static_cast<EDirection>(i));
-
-                            Door d(info.second.tileID, otherNode->getId() , static_cast<EDirection>(i), info.second.objectID);
-                            for (unsigned int cntrllr : info.second.associatedControllers)
+                            if (otherNode->getZoneID())
                             {
-                                Controller c;
-                                c.mControllerId = cntrllr;
-                                c.mIdDoor = info.second.objectID;
-                                
-                                auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int,TileInfo> tile) { return tile.second.actorID == cntrllr; });
-                                if (foundIt != end(turnInfo.tiles))
+                                Door d(info.second.tileID, otherNode->getId(), static_cast<EDirection>(i), info.second.objectID);
+                                for (unsigned int cntrllr : info.second.associatedControllers)
                                 {
-                                    c.mTileID = foundIt->second.tileID;
-                                    ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                    Controller c;
+                                    c.mControllerId = cntrllr;
+                                    c.mIdDoor = info.second.objectID;
+
+                                    auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int, TileInfo> tile) { return tile.second.actorID == cntrllr; });
+                                    if (foundIt != end(turnInfo.tiles))
+                                    {
+                                        c.mTileID = foundIt->second.tileID;
+                                        ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                    }
+                                    d.mControllerId.emplace_back(c);
                                 }
-                                d.mControllerId.emplace_back(c);
+                                ensureDoor(node->getZoneID(), d);
+                                d.mTileId = otherNode->getId();
+                                d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
+                                ensureDoor(otherNode->getZoneID(), d);
                             }
-                            ensureDoor(node->getZoneID(), d);
-                            d.mTileId = otherNode->getId();
-                            d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
-                            ensureDoor(otherNode->getZoneID(), d);
                         }
                         processDoorState(object, node, i);
                     }
@@ -270,25 +272,28 @@ continue;
                     {
                         auto otherNode = node->getNeighbour(static_cast<EDirection>(i));
 
-                        Door d(info.second.tileID, otherNode->getId(), static_cast<EDirection>(i), info.second.objectID);
-                        for (unsigned int cntrllr : info.second.associatedControllers)
+                        if (otherNode->getZoneID())
                         {
-                            Controller c;
-                            c.mControllerId = cntrllr;
-                            c.mIdDoor = info.second.objectID;
-
-                            auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int, TileInfo> tile) { return tile.second.actorID == cntrllr; });
-                            if (foundIt != end(turnInfo.tiles))
+                            Door d(info.second.tileID, otherNode->getId(), static_cast<EDirection>(i), info.second.objectID);
+                            for (unsigned int cntrllr : info.second.associatedControllers)
                             {
-                                c.mTileID = foundIt->second.tileID;
-                                ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                Controller c;
+                                c.mControllerId = cntrllr;
+                                c.mIdDoor = info.second.objectID;
+
+                                auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int, TileInfo> tile) { return tile.second.actorID == cntrllr; });
+                                if (foundIt != end(turnInfo.tiles))
+                                {
+                                    c.mTileID = foundIt->second.tileID;
+                                    ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                }
+                                d.mControllerId.emplace_back(c);
                             }
-                            d.mControllerId.emplace_back(c);
+                            ensureDoor(node->getZoneID(), d);
+                            d.mTileId = otherNode->getId();
+                            d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
+                            ensureDoor(otherNode->getZoneID(), d);
                         }
-                        ensureDoor(node->getZoneID(), d);
-                        d.mTileId = otherNode->getId();
-                        d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
-                        ensureDoor(otherNode->getZoneID(), d);
                     }
 
                     processDoorState(object, node, i);
