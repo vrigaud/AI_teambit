@@ -33,6 +33,7 @@ public:
 
 	virtual void Configure(int argc, char *argv[], const std::string& _logpath);
 	virtual void Load();
+    virtual void Start();
 	virtual void OnBotInitialized();
 	virtual void Init(LevelInfo& _levelInfo);
 	virtual void OnGameStarted();

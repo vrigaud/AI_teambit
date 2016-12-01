@@ -36,11 +36,12 @@ struct Controller;
 struct Door
 {
     unsigned int mTileId;
+    unsigned int mOtherSideTileId;
     EDirection mDoorDirection;
     std::vector<Controller> mControllerId;
     unsigned int mIdDoor;
 
-    Door(unsigned int tileId, EDirection dir, unsigned int drId) : mTileId{ tileId }, mDoorDirection{ dir }, mControllerId{}, mIdDoor{ drId } 
+    Door(unsigned int tileId, unsigned int otherSideId, EDirection dir, unsigned int drId) : mTileId{ tileId }, mOtherSideTileId{ otherSideId }, mDoorDirection{ dir }, mControllerId{}, mIdDoor{ drId }
     {
         mControllerId.reserve(10);
     }

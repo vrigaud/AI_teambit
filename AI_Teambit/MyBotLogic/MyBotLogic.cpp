@@ -32,9 +32,7 @@ void MyBotLogic::Configure(int argc, char *argv[], const std::string& _logpath)
 void MyBotLogic::Load()
 {
     //Write Code Here
-#ifdef BOT_LOGIC_DEBUG
-    Sleep(5000);
-#endif
+    
 }
 
 void MyBotLogic::Init(LevelInfo& _levelInfo)
@@ -45,6 +43,14 @@ void MyBotLogic::Init(LevelInfo& _levelInfo)
 
 void MyBotLogic::OnBotInitialized()
 {
+    //Write Code Here
+}
+
+void MyBotLogic::Start()
+{ 
+    #ifdef BOT_LOGIC_DEBUG
+        Sleep(5000);
+    #endif
     //Write Code Here
 }
 
