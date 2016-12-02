@@ -250,7 +250,7 @@ void Map::updateEdges(TurnInfo& turnInfo)
                 if (typeWindow != end(object.objectTypes))
                 {
                     if (typeDoor != end(object.objectTypes))
-                    {
+                    { // windowed door
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
 
@@ -275,7 +275,7 @@ void Map::updateEdges(TurnInfo& turnInfo)
                                     d.mControllerId.emplace_back(c);
                                 }
                                 ensureDoor(node->getZoneID(), d);
-                                d.mTileId = otherNode->getId();
+                                //d.mTileId = otherNode->getId();
                                 d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
                                 ensureDoor(otherNode->getZoneID(), d);
                             }
@@ -315,7 +315,7 @@ void Map::updateEdges(TurnInfo& turnInfo)
                                 d.mControllerId.emplace_back(c);
                             }
                             ensureDoor(node->getZoneID(), d);
-                            d.mTileId = otherNode->getId();
+                            //d.mTileId = otherNode->getId();
                             d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
                             ensureDoor(otherNode->getZoneID(), d);
                         }

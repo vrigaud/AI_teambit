@@ -59,8 +59,8 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                 return ourMap->getNode(npc->getCurrentTile())->getZoneID() == currentRecursionZoneId;
             });
 
-            auto currentZone = ourMap->getZoneList()[currentRecursionZoneId].mNodeOnZone;
-            copy_if(begin(currentZone), end(currentZone), back_inserter(goals), [&](Node* n)
+            auto currentZoneNodes = ourMap->getZoneList()[currentRecursionZoneId].mNodeOnZone;
+            copy_if(begin(currentZoneNodes), end(currentZoneNodes), back_inserter(goals), [&](Node* n)
             {
                 return (n->getZoneID() == currentRecursionZoneId) && (n->getType() == Node::GOAL);
             });
@@ -75,7 +75,21 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                 }
                 else
                 {
-                    unsigned int target = begin(localController)->mTileID;
+                    // Looking for door that can be crossed alone
+                    unsigned int target;
+                    std::vector<Door> currentZoneDoors = ourMap->getZoneList()[currentRecursionZoneId].mDoorOnZone;
+                    Zone zone1 = ourMap->getZoneList()[currentRecursionZoneId];
+                    for (Controller c : localController)
+                    {
+                        auto doorFound = find_if(begin(currentZoneDoors), end(currentZoneDoors),
+                            [&c](Door door) {
+                            return (door.mTileId == c.mTileID || door.mOtherSideTileId == c.mTileID) && c.mIdDoor == door.mIdDoor;
+                        });
+                        if (doorFound != end(currentZoneDoors))
+                        {
+                            target = c.mTileID;
+                        }
+                    }
                     ppNpc->setGoal(target);
                     bboard.setTargetedPP(target);
                     return BehaviourTree::result::SUCCESS;
