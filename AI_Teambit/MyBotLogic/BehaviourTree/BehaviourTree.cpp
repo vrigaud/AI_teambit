@@ -8,6 +8,7 @@
 #include "BlocFindBGBG.h"
 #include "BlocFindBGBNpc.h"
 #include "BlocDoor.h"
+#include "BlocDoorRecursion.h"
 
 using namespace BehaviourTree;
 
@@ -21,6 +22,8 @@ void BehaviourTree::BehaviourTreeObject::initialize(const LevelInfo& levelInfo)
     
     BlocSequence* hasDevice = new BlocSequence{};
     hasDevice->connect(*getBlocDoor(mBlackBoard));
+    hasDevice->connect(*getBlocDoorRecursion(mBlackBoard));
+    hasDevice->connect(*getBlocUpdateActionList(mBlackBoard));
     //HasDevice->connect();
 
     BlocSequence* mNormal = new BlocSequence{};

@@ -68,6 +68,7 @@ void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _acti
     Map::getInstance()->logMap(mTurnCount);
 
     MiCoMa::getInstance()->update(_turnInfo, _actionList);
+
 }
 
 void MyBotLogic::Exit()

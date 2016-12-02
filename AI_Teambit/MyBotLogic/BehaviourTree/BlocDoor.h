@@ -39,7 +39,7 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
         {
             return BehaviourTree::result::FAIL;
         }
-        else if (bboard.mZoneIdRecursion.size())
+        else if (bboard.getZoneIdRecursion().size())
         {
             return BehaviourTree::result::SUCCESS;
         }
@@ -51,19 +51,23 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
                 return zone.second.isClosed && zone.second.mControllerOnZone.size();
             });
 
+            //validzone peut il etre == end ou nullptr??
+
+            BehaviourTree::result res = BehaviourTree::result::FAIL;
+
             auto ourNpcs = ourMicoma->getNpcs();
             for_each(begin(ourNpcs), end(ourNpcs), [&](Npc* npc)
             {
                 if (ourMap->getNode(npc->getCurrentTile())->getZoneID() == validZone.first)
                 {
                     bboard.setPpNpc(npc);
-                    bboard.mZoneIdRecursion.push(validZone.first);
+                    bboard.getZoneIdRecursion().push(validZone.first);
                     
-                    return BehaviourTree::result::SUCCESS;
+                    res = BehaviourTree::result::SUCCESS;
                 }
             }); // we have to be sure that the npc is the closer to the pp TODO - DO IT
 
-            return BehaviourTree::result::FAIL;
+            return res;
         }
     };
 
@@ -71,5 +75,3 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
 }
 
 #endif //!BLOCDOORS_H
-
-////////////////////////////////////////////////////////////////////////// DO NOT FORGET RETURN SUCCESS OR FAIL

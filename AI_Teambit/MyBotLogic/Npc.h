@@ -76,6 +76,16 @@ public:
         mObjective = Objective{ aType, tileId };
     }
 
+    Objective getObjective() const 
+    {
+        return mObjective;
+    }
+
+    bool isArrived() const 
+    {
+        return mCurrentState == ARRIVED;
+    }
+
     // Debug Mission
     template<class T>
     void DisplayVector(std::string, const std::vector<T>);

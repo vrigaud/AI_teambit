@@ -93,8 +93,8 @@ class Map : Singleton
     std::vector<Zone> mZone;
 
     // Attribute related to doors and devices
-    std::vector<Door> mDoorsMap;
-    std::vector<Controller> mControllers;
+    //std::vector<Door> mDoorsMap;
+    //std::vector<Controller> mControllers;
     bool hasDoors = false;
 
 
@@ -145,7 +145,11 @@ public:
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
 	unsigned int getNeighborTileIndex(unsigned int iCurrentNode, const EDirection & dir);
-    const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
+    
+    std::vector<unsigned int>& getGoalIDs() 
+    {
+        return mGoalTiles;
+    }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
     std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
 
@@ -189,7 +193,7 @@ public:
 	void logZones(const unsigned int);
     void logInfluenceMap(const unsigned int nbTurn);
 
-    std::vector<Controller> isLocallyLinked(unsigned int zoneId);
+    std::vector<Controller> getLocallyLinkedControllers(unsigned int zoneId);
    // void findNpcOnTheSameZone(unsigned int zoneID);
 
     bool getHasDoors() const { return hasDoors; }

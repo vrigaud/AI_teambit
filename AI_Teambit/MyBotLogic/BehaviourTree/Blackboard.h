@@ -20,16 +20,17 @@ private:
 	std::vector<Action*> mActionList;
     Npc* mScout;
     Npc* mPpNpc; // npc to go onto pressure plate
-
+    std::stack<unsigned int> mZoneIdRecursion; //Zone's id of the recursion
+    std::vector<unsigned int> mZoneVisited;
+    int mTargetedPP;
 
 	TurnInfo mTurnInfo;
 
 public:
     
-    std::stack<unsigned int> mZoneIdRecursion; //Zone's id of the recursion
 
 	BlackBoard()
-		: mGoalMap{}, mActionList{}
+        : mGoalMap{}, mActionList{}, mZoneIdRecursion{}, mZoneVisited{}, mTargetedPP{-1}
 	{}
 
 	void init(const LevelInfo &levelInfo);
@@ -65,6 +66,26 @@ public:
     void setPpNpc(Npc* val)
     {
         mPpNpc = val; 
+    }
+
+    std::stack<unsigned int>& getZoneIdRecursion() 
+    { 
+        return mZoneIdRecursion;
+    }
+   
+    std::vector<unsigned int>& getZoneVisited() 
+    {
+        return mZoneVisited;
+    }
+
+    int getTargetedPP() const 
+    { 
+        return mTargetedPP; 
+    }
+    
+    void setTargetedPP(int val) 
+    { 
+        mTargetedPP = val; 
     }
 };
 
