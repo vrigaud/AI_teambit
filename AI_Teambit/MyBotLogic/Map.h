@@ -55,6 +55,7 @@ class Map : Singleton
     Logger mLoggerEdges;
     Logger mLoggerInfluence;
 	Logger mLoggerGalacticZones;
+    Logger mLoggerTime;
 
 private:
 	Map() : mWidth(0), mHeight(0)

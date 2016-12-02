@@ -7,6 +7,7 @@
 #include "BlocHasGoal.h"
 #include "BlocFindBGBG.h"
 #include "BlocFindBGBNpc.h"
+#include "BlocUpdateNpcTiles.h"
 
 using namespace BehaviourTree;
 
@@ -22,6 +23,7 @@ void BehaviourTree::BehaviourTreeObject::initialize(const LevelInfo& levelInfo)
 	findGoalSelect->connect(*getBlocFindBGBNpc(mBlackBoard));
 	findGoalSelect->connect(*getBlocFindBGBG(mBlackBoard));
 
+    mRoot->connect(*getBlocUpdateNpcTiles(mBlackBoard));
 	mRoot->connect(*findGoalSelect);
 	mRoot->connect(*getBlocHasGoal(mBlackBoard));
 	mRoot->connect(*getBlocUpdateActionList(mBlackBoard));

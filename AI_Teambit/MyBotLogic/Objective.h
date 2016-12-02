@@ -11,11 +11,12 @@ struct Objective
     };
 
     Objective(ObjectiveType aType = NONE, int tileId = -1)
-        : mTileId{ tileId }, mType{ aType }
+        : mTileId{ tileId }, mType{ aType }, mIsAchieved{false}
     {}
 
     ObjectiveType mType;
     int mTileId;
+    bool mIsAchieved;
 };
 
 #endif // OBJECTIVE_H

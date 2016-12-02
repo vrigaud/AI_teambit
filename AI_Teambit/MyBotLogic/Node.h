@@ -52,12 +52,12 @@ class Node
 public:
     enum NodeType
     {
-        NONE,
-        FORBIDDEN,
-        GOAL,
-        OCCUPIED,
-        PRESSURE_PLATE,
-        PATH
+        NONE = 0b1,
+        FORBIDDEN = 0b10,
+        GOAL = 0b100,
+        OCCUPIED = 0b1000,
+        PRESSURE_PLATE = 0b10000,
+        PATH = 0b100000
     };
     
     enum { NBNEIGHBOURS = 8 };

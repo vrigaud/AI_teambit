@@ -76,6 +76,10 @@ public:
     {
         mObjective = Objective{ aType, tileId };
     }
+    bool isArrived()
+    {
+        return getCurrentTile() == mGoal;
+    }
 
     // Debug Mission
     template<class T>
