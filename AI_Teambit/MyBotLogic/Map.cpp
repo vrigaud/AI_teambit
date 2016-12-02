@@ -365,6 +365,7 @@ void Map::ensureDoor(unsigned int zoneId, Door d)
     if (find(begin(mZoneList[zoneId].mDoorOnZone), end(mZoneList[zoneId].mDoorOnZone), d) == end(mZoneList[zoneId].mDoorOnZone))
     {
         mZoneList[zoneId].mDoorOnZone.emplace_back(d);
+        setHasDoors(true);
     }
 }
 
@@ -375,6 +376,7 @@ void Map::ensureController(unsigned int zoneId, Controller c)
     if (find(begin(mZoneList[zoneId].mControllerOnZone), end(mZoneList[zoneId].mControllerOnZone), c) == end(mZoneList[zoneId].mControllerOnZone))
     {
         mZoneList[zoneId].mControllerOnZone.emplace_back(c);
+        setHasDoors(true);
     }
 }
 
@@ -407,11 +409,6 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, Node* currentNode, st
             continue;
         }
 
-        // Eval
-        if (currentNode->getId() == 16)
-        {
-            auto lol = 5;
-        }
         unsigned int nZoneID{ neighbour->getZoneID() };
         if (nZoneID)
         {

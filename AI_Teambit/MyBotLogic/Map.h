@@ -95,6 +95,7 @@ class Map : Singleton
     // Attribute related to doors and devices
     std::vector<Door> mDoorsMap;
     std::vector<Controller> mControllers;
+    bool hasDoors = false;
 
 
     // Log stuff
@@ -190,6 +191,13 @@ public:
 
     std::vector<Controller> isLocallyLinked(unsigned int zoneId);
    // void findNpcOnTheSameZone(unsigned int zoneID);
+
+    bool getHasDoors() const { return hasDoors; }
+    void setHasDoors(bool val) { hasDoors = val; }
+    std::unordered_map<unsigned int, Zone> getZoneList() const 
+    {
+        return mZoneList; 
+    }
 
 };
 
