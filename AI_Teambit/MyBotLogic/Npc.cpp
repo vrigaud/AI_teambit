@@ -218,8 +218,10 @@ void Npc::move()
 
     mAction = new Move(mId, Map::getInstance()->getDirection(mPath.back(), mPath[mPath.size() > 1 ? mPath.size() - 2 : 0]));
     if (mPath.size())
+    {
         mPath.pop_back();
-
+        mCurrentTile = mPath.back();
+    }
     mNextState = MOVE;
 }
 
@@ -250,7 +252,7 @@ void Npc::searchPath()
     }
 
     DisplayVector("\tPath to Objective Tile -> ", mPath);
-
+    //TODO: Do not send follow path if size() is <= 1 (reason for mCurrentTile crash protection).
     mNextState = MOVING_DNPC;
 }
 
@@ -270,6 +272,7 @@ void Npc::followPath()
         //mCurrentTile = newTile;
 
         mPath.pop_back();
+        mCurrentTile = mPath.back();
 
         mNextState = FOLLOW_PATH;
 
