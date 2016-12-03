@@ -76,7 +76,7 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                 else
                 {
                     // Looking for door that can be crossed alone
-                    unsigned int target;
+                    unsigned int target{};
                     std::vector<Door> currentZoneDoors = ourMap->getZoneList()[currentRecursionZoneId].mDoorOnZone;
                     Zone zone1 = ourMap->getZoneList()[currentRecursionZoneId];
                     for (Controller c : localController)
@@ -88,8 +88,14 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                         if (doorFound != end(currentZoneDoors))
                         {
                             target = c.mTileID;
+                            ppNpc->setGoal(target);
+                            bboard.setTargetedPP(target);
+                            return BehaviourTree::result::SUCCESS;
                         }
                     }
+
+                    // Looking for other pressure plate
+                    target = begin(localController)->mTileID;
                     ppNpc->setGoal(target);
                     bboard.setTargetedPP(target);
                     return BehaviourTree::result::SUCCESS;
