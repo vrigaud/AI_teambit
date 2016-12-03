@@ -42,7 +42,7 @@ set JOBNAME=%DATE%_%hour%-%min%-%secs%
 rem in milliseconds
 set LoadTime=10000000
 set InitTime=10000000
-set TurnTime=10000000
+set TurnTime=15
 
 "%AIBOOTCAMP_ENGINE_DIR%/AIBootCamp.exe" %mapname% -AIBot=%aibotpath% -AIBotLogPath=%~dp0/StandaloneMatchResults/aibot -GameLogPath=%~dp0/StandaloneMatchResults/gamelog -JobID=%JOBNAME% -TeamID=%TEAMNAME% -LoadTime=%LoadTime% -InitTime=%InitTime% -TurnTime=%TurnTime%
 
