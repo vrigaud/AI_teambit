@@ -66,7 +66,6 @@ class Npc
 
 public:
 
-
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
 
@@ -75,6 +74,16 @@ public:
     void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
     {
         mObjective = Objective{ aType, tileId };
+    }
+
+    Objective getObjective() const 
+    {
+        return mObjective;
+    }
+
+    bool isArrived() const 
+    {
+        return mCurrentState == ARRIVED;
     }
 
     // Debug Mission
@@ -118,6 +127,7 @@ public:
 		return action;
 	}
 
+
 private:
 	unsigned int mCurrentTile{};
     void updateState();
@@ -149,6 +159,7 @@ private:
 
 	bool isBlockedByNpc(Npc* npc);
 	bool hasShorterPath(Npc* npc);
+
 };
 
 #endif // NPC_H

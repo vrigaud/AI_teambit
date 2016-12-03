@@ -11,9 +11,9 @@
 #include <set>
 #include <vector>
 
-// For debug only
 #include <string>
 
+// For debug only
 #ifdef _DEBUG
 #define BOT_LOGIC_DEBUG_MAP
 #endif
@@ -29,6 +29,47 @@ struct TileInfo;
 struct ObjectInfo;
 struct TurnInfo;
 struct NPCInfo;
+class Npc;
+
+struct Controller;
+
+struct Door
+{
+    unsigned int mTileId;
+    unsigned int mOtherSideTileId;
+    EDirection mDoorDirection;
+    std::vector<Controller> mControllerId;
+    unsigned int mIdDoor;
+
+    Door(unsigned int tileId, unsigned int otherSideId, EDirection dir, unsigned int drId) : mTileId{ tileId }, mOtherSideTileId{ otherSideId }, mDoorDirection{ dir }, mControllerId{}, mIdDoor{ drId }
+    {
+        mControllerId.reserve(10);
+    }
+
+    bool operator==(const Door& d0)
+    {
+        return mIdDoor == d0.mIdDoor;
+    }
+};
+
+//bool operator==(const Door& d0, const Door& d1)
+//{
+//    return d0.mIdDoor == d1.mIdDoor;
+//};
+
+struct Controller
+{
+    unsigned int mControllerId;
+    unsigned int mIdDoor;
+    unsigned int mTileID;
+
+    bool operator==(const Controller& c0)
+    {
+        return mControllerId == c0.mControllerId;
+    }
+};
+
+struct Zone;
 
 class Map : Singleton
 {
@@ -48,7 +89,14 @@ class Map : Singleton
 
     // Zone related attribute
     std::vector<bool> mWasDiffused;
-    std::unordered_map<unsigned int, bool> mZonesClosedStatus;
+    std::unordered_map<unsigned int, Zone> mZoneList;
+    std::vector<Zone> mZone;
+
+    // Attribute related to doors and devices
+    //std::vector<Door> mDoorsMap;
+    //std::vector<Controller> mControllers;
+    bool hasDoors = false;
+
 
     // Log stuff
     Logger mLogger;
@@ -78,7 +126,10 @@ private:
 
 	// Zone diffusion and management
 	void diffuseZone(const unsigned int startTileID);
-	void diffuseZoneRec(const unsigned int currentZoneID, const Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+	void diffuseZoneRec(const unsigned int currentZoneID, Node*, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes);
+    void ensureNode(unsigned int zoneId, Node*);
+    void ensureDoor(unsigned int zoneId, Door);
+    void ensureController(unsigned int zoneId, Controller);
 
     // Influence methods
 	void propagateInfluence();
@@ -94,7 +145,11 @@ public:
     void updateMap(TurnInfo&);
     void addGoalTile(unsigned int number);
 	unsigned int getNeighborTileIndex(unsigned int iCurrentNode, const EDirection & dir);
-    const std::vector<unsigned int>& getGoalIDs() const { return mGoalTiles; }
+    
+    std::vector<unsigned int>& getGoalIDs() 
+    {
+        return mGoalTiles;
+    }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
     std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
 
@@ -137,6 +192,37 @@ public:
     void logMap(const unsigned int);
 	void logZones(const unsigned int);
     void logInfluenceMap(const unsigned int nbTurn);
+
+    std::vector<Controller> getLocallyLinkedControllers(unsigned int zoneId);
+   // void findNpcOnTheSameZone(unsigned int zoneID);
+
+    bool getHasDoors() const { return hasDoors; }
+    void setHasDoors(bool val) { hasDoors = val; }
+    std::unordered_map<unsigned int, Zone> getZoneList() const 
+    {
+        return mZoneList; 
+    }
+
+};
+
+struct Zone
+{
+    unsigned int mZoneId;
+    std::vector<Door> mDoorOnZone;
+    std::vector<Controller> mControllerOnZone;
+    std::vector<Node*> mNodeOnZone;
+    bool isClosed;
+
+    Zone() : mZoneId{}
+    {
+        mDoorOnZone.reserve(5);
+        mControllerOnZone.reserve(5);
+
+        //Assumes Map is already constructed
+        mNodeOnZone.reserve(Map::getInstance()->getWidth()*Map::getInstance()->getHeight());
+
+        isClosed = false;
+    }
 };
 
 #endif // MAP_HEADER
