@@ -23,6 +23,7 @@ private:
     std::stack<unsigned int> mZoneIdRecursion; //Zone's id of the recursion
     std::vector<unsigned int> mZoneVisited;
     int mTargetedPP;
+    int mTargetedDoor;
 
 	TurnInfo mTurnInfo;
 
@@ -86,6 +87,16 @@ public:
     void setTargetedPP(int val) 
     { 
         mTargetedPP = val; 
+    }
+
+    int getTargetedDoor() const
+    {
+        return mTargetedDoor;
+    }
+
+    void setTargetedDoor(int val)
+    {
+        mTargetedDoor = val;
     }
 };
 

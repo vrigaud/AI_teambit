@@ -140,6 +140,11 @@ public:
         return mEdges[dir].mBlocking && !mEdges[dir].mOpen;
     }
 
+    bool isEdgeDoor(const EDirection& dir) const
+    {
+        return mEdges[dir].mEdgeType == EdgeData::DOOR || mEdges[dir].mEdgeType == EdgeData::DOOR_W;
+    }
+
     void setNeighbour(const EDirection& dir, Node* p)
     {
         mNeighbours[dir] = p;

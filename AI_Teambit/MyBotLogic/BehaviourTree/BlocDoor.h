@@ -29,10 +29,36 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
         else
         {
             auto zoneList = ourMap->getZoneList();
-            auto validZone = *find_if(begin(zoneList), end(zoneList), [](auto zone)
+            
+//             MiCoMa* ourMicoma = MiCoMa::getInstance();
+//             std::vector<Npc*> ourNpcs = ourMicoma->getNpcs();
+// 
+//             std::vector<Npc*> npcs{};
+//             npcs.reserve(ourMicoma->getNpcs().size());
+// 
+//             std::vector<Node*> goals{};
+//             goals.reserve(ourMap->getGoalIDs().size());
+// 
+//             unsigned int currentRecursionZoneId = bboard.getZoneIdRecursion().top();
+// 
+//             copy_if(begin(ourNpcs), end(ourNpcs), back_inserter(npcs), [&](Npc* npc)
+//             {
+//                 return ourMap->getNode(npc->getCurrentTile())->getZoneID() == currentRecursionZoneId;
+//             });
+// 
+//             auto currentZoneNodes = ourMap->getZoneList()[currentRecursionZoneId].mNodeOnZone;
+//             copy_if(begin(currentZoneNodes), end(currentZoneNodes), back_inserter(goals), [&](Node* n)
+//             {
+//                 return (n->getZoneID() == currentRecursionZoneId) && (n->getType() == Node::GOAL);
+//             });
+
+            auto validZone = *find_if(begin(zoneList), end(zoneList), [](std::pair<unsigned, Zone> zone)
             {
-                return zone.second.isClosed && zone.second.mControllerOnZone.size();
+                return zone.second.isClosed && (zone.second.mControllerOnZone.size() || zone.second.mDoorOnZone.size());
             });
+
+
+
 
             //validzone peut il etre == end ou nullptr??
 

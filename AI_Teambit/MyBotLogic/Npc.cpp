@@ -9,14 +9,15 @@
 #include <list>
 #include "MiCoMa.h"
 
+
 #include <chrono>
 
 using namespace std;
 using namespace std::chrono;
 
 Npc::Npc(unsigned int a_id, unsigned int a_tileId)
-    : mCurrentState{}, mNextState{}, mId{ a_id }, mCurrentTile{ a_tileId }, mTurnCount{0}, mPath{ a_tileId },
-      mHasGoal{}, mAction{}, mGoal{}
+    : mCurrentState{}, mNextState{}, mId{ a_id }, mCurrentTile{ a_tileId }, mTurnCount{ 0 }, mPath{ a_tileId },
+    mHasGoal{}, mAction{}, mGoal{}
 {
 #ifdef BOT_LOGIC_DEBUG_NPC
     mLogger.Init(LoggerPath::getInstance()->getPath(), "Npc_" + std::to_string(mId) + ".log");
@@ -28,7 +29,7 @@ Npc::Npc(unsigned int a_id, unsigned int a_tileId)
 
 void Npc::update()
 {
-    BOT_LOGIC_NPC_LOG(mLogger, "TURN #" + std::to_string(++mTurnCount), true);
+    BOT_LOGIC_NPC_LOG(mLogger, "TURN #" + std::to_string(++mTurnCount) + "\t current Objective Type : " + std::to_string(mObjective.mType), true);
     updateState();
     enterStateMachine();
 }
@@ -54,13 +55,25 @@ void Npc::updateState()
     {
         mNextState = EXPLORE_MAP;
     }
-    else if (mObjective.mType == Objective::GO_TO)
+    else if (mObjective.mType == Objective::GO_TO || mObjective.mType == Objective::GO_TO_EXPLORE)
     {
         mNextState = SEARCH_PATH;
     }
     else if (mObjective.mType == Objective::SEARCH_H_DOOR)
     {
         mNextState = EXPLORE_H_DOOR;
+    }
+    else if (mObjective.mType == Objective::GO_TO_BUTTON_DOOR)
+    {
+        if (mObjective.mTileId == getCurrentTile())
+        {
+            // interact
+            mNextState = INTERACTING;
+        }
+        else
+        { // move
+            mNextState = SEARCH_PATH;
+        }
     }
 }
 
@@ -79,6 +92,9 @@ void Npc::enterStateMachine()
             break;
         case WAITING:
             waiting();
+            break;
+        case INTERACTING:
+            interacting();
             break;
         }
     } while (mCurrentState != mNextState);
@@ -149,17 +165,35 @@ void Npc::waiting()
     mNextState = WAITING;
 }
 
+// Interact state
+void Npc::interacting()
+{
+    BOT_LOGIC_NPC_LOG(mLogger, " Interacting", true);
+    if (mObjective.mType == Objective::GO_TO_BUTTON_DOOR)
+    {// open a door
+        mAction = new Interact(getID(), mObjective.mDoorId, EInteraction::Interaction_OpenDoor);
+        mObjective.mIsAchieved = true;
+    }
+
+}
 
 // Exploring fsm function
 void Npc::exploreMap()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "-ExploreMap", true);
-
+    Map *map = Map::getInstance();
     std::vector<unsigned int> v = Map::getInstance()->getCloseMostInfluenteTile(mPath.back());
     if (v.empty())
-    {// then a Star to the nearest influent p (too expensive?)
-        mNextState = EXPLORE_WAITING;
-        //throw ThisIsNoGoodAtAllMiFriend{};
+    {// then a Star to the nearest unvisited tile (too expensive?)
+        auto temp = map->getNearestUnvisited(mPath.back());
+        if (temp.size())
+        {
+            setObjective(Objective::GO_TO_EXPLORE, temp[0]);
+        }
+        else
+        {
+            mNextState = EXPLORE_WAITING;
+        }
     }
     else
     {
@@ -278,7 +312,7 @@ void Npc::followPath()
         mNextState = FOLLOW_PATH;
 
 
-        if (mPath.back() == mGoal)
+        if (mPath.back() == mObjective.mTileId)
         {
             mNextState = ARRIVED;
         }
@@ -330,6 +364,10 @@ inline void Npc::movingWaiting()
 
 inline void Npc::arrived()
 {
+    if (mObjective.mType == Objective::GO_TO_EXPLORE)
+    {
+        setObjective(Objective::SEARCH_MAP);
+    }
     BOT_LOGIC_NPC_LOG(mLogger, "-Arrived", true);
     mCurrentState = ARRIVED;
     mNextState = ARRIVED;

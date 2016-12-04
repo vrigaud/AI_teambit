@@ -16,6 +16,7 @@ BehaviourTree::BaseBloc* getBlocUpdateNpcTiles(BlackBoard &bboard)
         Map * map = Map::getInstance();
         for (Npc* npc : MiCoMa::getInstance()->getNpcs())
         {
+            map->addVisitedTile(npc->getCurrentTile());
             if (npc->isArrived())
             {
                 map->getNode(npc->getCurrentTile())->setType(Node::OCCUPIED);

@@ -220,6 +220,35 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
     return returnVector;
 }
 
+std::vector<unsigned int> Map::getNearestUnvisited(unsigned int tileId)
+{
+    int bestDist = 666;
+    std::vector<unsigned int> v{};
+    unsigned int foundID{};
+    bool found = false;
+    for (std::pair<unsigned, bool> tile: mKnownTilesAndVisitedStatus)
+    {
+        if (tile.second)
+        {
+            continue;
+        }
+
+        float distance = calculateDistance(tileId, tile.first);
+        if (distance < bestDist)
+        {
+            found = true;
+            foundID = tile.first;
+            bestDist = distance;
+        }
+    }
+
+    if (found)
+    {
+        v.emplace_back(foundID);
+    }
+    return v;
+}
+
 void Map::updateMap(TurnInfo& turnInfo)
 {
 /*
@@ -552,7 +581,9 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, Node* currentNode, st
             }
 
             if (neighbour->getType() == Node::FORBIDDEN ||
-                currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
+                currentNode->isEdgeBlocked(static_cast<EDirection>(i))
+                || currentNode->isEdgeDoor(static_cast<EDirection>(i))
+                || neighbour->isEdgeDoor(inverseDirection(static_cast<EDirection>(i))))
             {
                 continue;
             }
@@ -638,6 +669,12 @@ void Map::addSeenTile(unsigned tileId)
     }
     mKnownTilesAndVisitedStatus[tileId] = false; // Add unvisited tile to known tiles
 }
+
+void Map::addVisitedTile(unsigned tileId)
+{
+    mKnownTilesAndVisitedStatus[tileId] = true;
+}
+
 
 void Map::createNode(Node* node)
 {
