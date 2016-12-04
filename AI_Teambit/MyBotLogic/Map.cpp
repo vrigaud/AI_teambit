@@ -6,6 +6,7 @@
 #include <Math.h>
 #include <algorithm>
 #include <map>
+#include "MiCoMa.h"
 
 #include <chrono>
 using namespace std::chrono;
@@ -37,6 +38,7 @@ void Map::setLoggerPath()
     BOT_LOGIC_MAP_LOG(mLoggerGalacticZones, "Configure", true);
 
     BOT_LOGIC_MAP_LOG(mLoggerTime, "Timer Log for map", true);
+
 }
 
 void Map::initMap(const LevelInfo& levelInfo)
@@ -57,13 +59,25 @@ void Map::initMap(const LevelInfo& levelInfo)
     connectNodes();
 
     initZones(levelInfo.npcs);
+
+    // Build a dummy turnInfo
+    TurnInfo dummyTurn;
+    dummyTurn.npcs = levelInfo.npcs;
+    dummyTurn.objects = levelInfo.objects;
+    dummyTurn.serializedData = levelInfo.serializedData;
+    dummyTurn.tiles = levelInfo.tiles;
+    dummyTurn.turnNb = 0;
+    updateMap(dummyTurn);
+
     logZones(0);
 }
 
 void Map::initZones(std::map<unsigned int, NPCInfo> npcsInfo)
 {
     mWasDiffused.resize(mHeight * mWidth);
-    mZonesClosedStatus.reserve(50); // 50 because we have memory! 
+
+    mZoneList.reserve(50); // 50 because we have memory! 
+
     for (auto npc : npcsInfo)
     {
         getNode(npc.second.tileID)->setZoneID(++mGreatestZoneID);
@@ -115,6 +129,7 @@ void Map::createInfluenceMap(const InfluenceData::InfluenceType& aType)
 //    std::sort(begin(mInterestingNodes), end(mInterestingNodes), [](const Node* a, const Node* b) {
 //        return a->getInfluence() > b->getInfluence();
 //    });
+
     propagateInfluence();
 
 }
@@ -162,6 +177,9 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
 
     float bestInflu = 0.0f;
     int bestTile = -1;
+
+    int numberOfNeighbour{};
+    unsigned int neighbourID{};
     //unsigned int counterTileMax{};
     //unsigned int counterTileBestInflu{};
     for (int i = N; i <= NW; ++i)
@@ -174,6 +192,11 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
         if (neighboor && neighboor->getType() != Node::FORBIDDEN)
         { // neighboor is existing and autorized and accessible
             //++counterTileMax;
+
+            ++numberOfNeighbour;
+            neighbourID = neighboor->getId();
+
+
             float nodeinf = neighboor->getInfluence();
 
             if (bestInflu < nodeinf)
@@ -188,11 +211,18 @@ std::vector<unsigned int> Map::getCloseMostInfluenteTile(unsigned int tileId) co
     {
         returnVector.emplace_back(bestTile);
     }
+
+    else if (numberOfNeighbour == 1)
+    {// Fix relative . it means if we just have one tile we go on 
+        returnVector.emplace_back(neighbourID);
+    }
+
     return returnVector;
 }
 
 void Map::updateMap(TurnInfo& turnInfo)
 {
+/*
     BOT_LOGIC_MAP_LOG(mLoggerTime, "TURN# " + std::to_string(turnInfo.turnNb), true);
     long long sum{};
 
@@ -228,9 +258,19 @@ void Map::updateMap(TurnInfo& turnInfo)
     logInfluenceMap(turnInfo.turnNb);
 
     BOT_LOGIC_MAP_LOG(mLoggerTime, "\t Update map average duration : " + std::to_string(sum) + "us \n", true);
+*/
 
+    //Edges need to be updated first to avoid adding unaccessible goal
+    updateEdges(turnInfo);
+    updateTiles(turnInfo);
+    updateZones(turnInfo);
 
+    //Log
+    logZones(turnInfo.turnNb);
 
+    // TODO - relocate in MiCoMa or Npc : up to you bruh
+    createInfluenceMap();
+    logInfluenceMap(turnInfo.turnNb);
 }
 
 void Map::updateEdges(TurnInfo& turnInfo)
@@ -239,17 +279,21 @@ void Map::updateEdges(TurnInfo& turnInfo)
     for (std::pair<unsigned, ObjectInfo> info : turnInfo.objects)
     {
         Node* node = getNode(info.second.tileID);
+
+        ObjectInfo object = info.second;
+        bool openDoorFound{ true };
+
         for (int i = N; i <= NW; ++i)
         {
-            ObjectInfo object = info.second;
             if (info.second.edgesCost[i] == 0)
             {
+                openDoorFound = false;
                 auto typeHighWall = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_HighWall);
                 if (typeHighWall != end(object.objectTypes))
                 {
                     node->setEdgeType(static_cast<EDirection>(i), EdgeData::WALL);
                     BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : WALL", true);
-                    continue;
+                    //continue;
                 }
 
                 auto typeWindow = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_Window);
@@ -257,9 +301,36 @@ void Map::updateEdges(TurnInfo& turnInfo)
                 if (typeWindow != end(object.objectTypes))
                 {
                     if (typeDoor != end(object.objectTypes))
-                    {
+                    { // windowed door
                         BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR_W", false);
                         node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR_W);
+
+                        if (node->getZoneID())
+                        {
+                            auto otherNode = node->getNeighbour(static_cast<EDirection>(i));
+                            if (otherNode->getZoneID())
+                            {
+                                Door d(info.second.tileID, otherNode->getId(), static_cast<EDirection>(i), info.second.objectID);
+                                for (unsigned int cntrllr : info.second.associatedControllers)
+                                {
+                                    Controller c;
+                                    c.mControllerId = cntrllr;
+                                    c.mIdDoor = info.second.objectID;
+
+                                    auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int, TileInfo> tile) { return tile.second.actorID == cntrllr; });
+                                    if (foundIt != end(turnInfo.tiles))
+                                    {
+                                        c.mTileID = foundIt->second.tileID;
+                                        ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                    }
+                                    d.mControllerId.emplace_back(c);
+                                }
+                                ensureDoor(node->getZoneID(), d);
+                                //d.mTileId = otherNode->getId();
+                                d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
+                                ensureDoor(otherNode->getZoneID(), d);
+                            }
+                        }
                         processDoorState(object, node, i);
                     }
                     else
@@ -272,7 +343,54 @@ void Map::updateEdges(TurnInfo& turnInfo)
                 {
                     BOT_LOGIC_MAP_LOG(mLoggerEdges, "\tTileID : " + std::to_string(info.second.tileID) + " - Dir : " + std::to_string(i) + " - Type : DOOR", false);
                     node->setEdgeType(static_cast<EDirection>(i), EdgeData::DOOR);
+
+                    if (node->getZoneID())
+                    {
+                        auto otherNode = node->getNeighbour(static_cast<EDirection>(i));
+
+                        if (otherNode->getZoneID())
+                        {
+                            Door d(info.second.tileID, otherNode->getId(), static_cast<EDirection>(i), info.second.objectID);
+                            for (unsigned int cntrllr : info.second.associatedControllers)
+                            {
+                                Controller c;
+                                c.mControllerId = cntrllr;
+                                c.mIdDoor = info.second.objectID;
+
+                                auto foundIt = find_if(begin(turnInfo.tiles), end(turnInfo.tiles), [cntrllr](std::pair<unsigned int, TileInfo> tile) { return tile.second.actorID == cntrllr; });
+                                if (foundIt != end(turnInfo.tiles))
+                                {
+                                    c.mTileID = foundIt->second.tileID;
+                                    ensureController(getNode(foundIt->second.tileID)->getZoneID(), c);
+                                }
+                                d.mControllerId.emplace_back(c);
+                            }
+                            ensureDoor(node->getZoneID(), d);
+                            //d.mTileId = otherNode->getId();
+                            d.mDoorDirection = inverseDirection(static_cast<EDirection>(i));
+                            ensureDoor(otherNode->getZoneID(), d);
+                        }
+                    }
+
                     processDoorState(object, node, i);
+                }
+            }
+        }
+        if (openDoorFound)
+        {
+            auto typeDoor = find(begin(object.objectTypes), end(object.objectTypes), ObjectType_Door);
+            if (typeDoor != end(object.objectTypes))
+            {
+                if (node->getZoneID())
+                {
+                    auto doorsInZone = mZoneList.at(node->getZoneID()).mDoorOnZone;
+
+                    auto foundDoor = find_if(begin(doorsInZone), end(doorsInZone), [&node](Door d) {return d.mTileId == node->getId() || d.mOtherSideTileId == node->getId();});
+
+                    if (foundDoor != end(doorsInZone))
+                    {
+                        node->setDoorState(node->getId() == foundDoor->mTileId ? foundDoor->mDoorDirection : inverseDirection(foundDoor->mDoorDirection), true);
+                    }
                 }
             }
         }
@@ -334,13 +452,14 @@ void Map::updateTiles(TurnInfo& turnInfo)
         }
     }
 }
-
+       
 void Map::updateZones(TurnInfo& turnInfo)
 {
     std::fill(begin(mWasDiffused), end(mWasDiffused), false);
+
     for (auto npc : turnInfo.npcs)
     {
-        mZonesClosedStatus[getNode(npc.second.tileID)->getZoneID()] = true;
+        mZoneList[getNode(npc.second.tileID)->getZoneID()].isClosed = true;
     }
 
     for (auto npc : turnInfo.npcs)
@@ -357,13 +476,49 @@ void Map::diffuseZone(const unsigned int startTileID)
     std::set<Node*>::iterator currentNodeIT{ diffusionOpenNodes.begin() };
     do
     {
-        diffuseZoneRec((*currentNodeIT)->getZoneID(), (*currentNodeIT), diffusionOpenNodes);
+        auto currentZoneID = (*currentNodeIT)->getZoneID();
+
+        ensureNode(currentZoneID, (*currentNodeIT));
+        diffuseZoneRec(currentZoneID, (*currentNodeIT), diffusionOpenNodes);
         currentNodeIT = diffusionOpenNodes.upper_bound(*currentNodeIT);
 
     } while (currentNodeIT != diffusionOpenNodes.end());
 }
 
-void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNode, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes)
+void Map::ensureNode(unsigned int zoneId, Node* n)
+{
+    mZoneList[zoneId].mZoneId = zoneId;
+
+    if (find(begin(mZoneList[zoneId].mNodeOnZone), end(mZoneList[zoneId].mNodeOnZone), n) == end(mZoneList[zoneId].mNodeOnZone))
+    {
+        mZoneList[zoneId].mNodeOnZone.emplace_back(n);
+    }
+}
+
+void Map::ensureDoor(unsigned int zoneId, Door d)
+{
+    mZoneList[zoneId].mZoneId = zoneId;
+
+    if (find(begin(mZoneList[zoneId].mDoorOnZone), end(mZoneList[zoneId].mDoorOnZone), d) == end(mZoneList[zoneId].mDoorOnZone))
+    {
+        mZoneList[zoneId].mDoorOnZone.emplace_back(d);
+        setHasDoors(true);
+    }
+}
+
+void Map::ensureController(unsigned int zoneId, Controller c)
+{
+    mZoneList[zoneId].mZoneId = zoneId;
+
+    if (find(begin(mZoneList[zoneId].mControllerOnZone), end(mZoneList[zoneId].mControllerOnZone), c) == end(mZoneList[zoneId].mControllerOnZone))
+    {
+        mZoneList[zoneId].mControllerOnZone.emplace_back(c);
+        setHasDoors(true);
+    }
+}
+
+
+void Map::diffuseZoneRec(const unsigned int currentZoneID, Node* currentNode, std::set<Node*, NodeZoneIDComparator>& diffusionOpenNodes)
 {
     mWasDiffused[currentNode->getId()] = true;
 
@@ -375,11 +530,6 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNo
             continue;
         }
 
-        // Eval
-        if (currentNode->getId() == 16)
-        {
-            auto lol = 5;
-        }
         unsigned int nZoneID{ neighbour->getZoneID() };
         if (nZoneID)
         {
@@ -396,7 +546,7 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNo
             {
                 if (!currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
                 {
-                    mZonesClosedStatus[currentZoneID] = false;
+                    mZoneList[currentZoneID].isClosed = false;
                 }
                 continue;
             }
@@ -409,7 +559,17 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNo
 
             if (currentZoneID < nZoneID)
             {
+                auto foundIt = find(begin(mZoneList[nZoneID].mNodeOnZone), end(mZoneList[nZoneID].mNodeOnZone), neighbour);
+                if (foundIt != end(mZoneList[nZoneID].mNodeOnZone))
+                {
+                    mZoneList[nZoneID].mNodeOnZone.erase(foundIt);
+                    if (mZoneList[nZoneID].mNodeOnZone.empty())
+                    {
+                        mZoneList.erase(nZoneID);
+                    }
+                }
                 neighbour->setZoneID(currentZoneID);
+                ensureNode(currentZoneID, neighbour);
                 diffuseZoneRec(currentZoneID, neighbour, diffusionOpenNodes);
                 //continue;
             }
@@ -421,15 +581,19 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNo
         {
             ++mGreatestZoneID;
             neighbour->setZoneID(mGreatestZoneID);
+
+            ensureNode(mGreatestZoneID, neighbour);
+
             if (!currentNode->isEdgeBlocked(static_cast<EDirection>(i)))
             {
-                mZonesClosedStatus[currentZoneID] = false;
+                mZoneList[mGreatestZoneID].isClosed = false;
             }
         }
         else if (neighbour->getType() == Node::FORBIDDEN)
         {
             ++mGreatestZoneID;
             neighbour->setZoneID(mGreatestZoneID);
+            ensureNode(mGreatestZoneID, neighbour);
         }
         else
         {
@@ -437,11 +601,13 @@ void Map::diffuseZoneRec(const unsigned int currentZoneID, const Node* currentNo
             {
                 ++mGreatestZoneID;
                 neighbour->setZoneID(mGreatestZoneID);
+                ensureNode(mGreatestZoneID, neighbour);
                 diffusionOpenNodes.emplace(neighbour);
             }
             else
             {
                 neighbour->setZoneID(currentZoneID);
+                ensureNode(currentZoneID, neighbour);
                 diffuseZoneRec(currentZoneID, neighbour, diffusionOpenNodes);
             }
         }
@@ -567,7 +733,7 @@ bool Map::canMoveOnTile(unsigned int startTile, unsigned int tileToGo)
         return true;
     }
     EDirection dir = getDirection(startTile, tileToGo);
-    return !(getNode(tileToGo)->getType() == Node::OCCUPIED || getNode(tileToGo)->getType() == Node::FORBIDDEN) && !getNode(startTile)->isEdgeBlocked(dir);
+    return (Node::FORBIDDEN || getNode(tileToGo)->getType() == Node::OCCUPIED) && !getNode(startTile)->isEdgeBlocked(dir);
 }
 
 void Map::addGoalTile(unsigned int number)
@@ -609,6 +775,32 @@ unsigned int Map::getNeighborTileIndex(unsigned int iCurrentNode, const EDirecti
     }
     return iCurrentNode;
 }
+
+std::vector<Controller> Map::getLocallyLinkedControllers(unsigned int zoneId)
+{
+    auto localDoors = mZoneList[zoneId].mDoorOnZone;
+    auto localControllers = mZoneList[zoneId].mControllerOnZone;
+
+    std::vector<Controller> locallyLinkedControllers{};
+    locallyLinkedControllers.reserve(localControllers.size());
+
+    for (Controller c : localControllers)
+    {
+        for (Door d : localDoors)
+        {
+            if (c.mIdDoor == d.mIdDoor)
+            {
+                locallyLinkedControllers.emplace_back(c);
+            }
+        }
+    }
+
+    return locallyLinkedControllers;
+}
+
+
+
+
 
 //----------------------------------------------------------------------
 // LOGGER
@@ -671,9 +863,9 @@ void Map::logZones(const unsigned int nbTurn)
     // Printing some infos
     myLog += "\tGreatest Galatic Zone : " + std::to_string(mGreatestZoneID) + "\n\n";
     myLog += "\t Closed Zone(s) : \n\t\t";
-    for (auto zoneZ : mZonesClosedStatus)
+    for (auto zoneZ : mZoneList)
     {
-        if (zoneZ.second)
+        if (zoneZ.second.isClosed)
         {
             myLog += std::to_string(zoneZ.first) + " - ";
         }

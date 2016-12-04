@@ -1,6 +1,5 @@
-#ifndef BLOCROOT_H
-#define BLOCROOT_H
-
+#ifndef BLOCBEHAVIOURTREE_H
+#define BLOCBEHAVIOURTREE_H
 
 #include "BaseBloc.h"
 
@@ -60,6 +59,4 @@ namespace BehaviourTree
 	};
 }
 
-
-
-#endif //!BLOCROOT_H
+#endif //!BLOCBEHAVIOURTREE_H

@@ -4,6 +4,7 @@
 #include "Map.h"
 
 #include <set>
+#include <algorithm>
 #include <vector>
 #include <list>
 #include "MiCoMa.h"
@@ -548,6 +549,8 @@ bool Npc::hasShorterPath(Npc* npc)
     return getID() < npc->getID()
         && mPath.size() == npc->getPath().size();
 }
+
+
 
 
 //-------------------------------------------------------------------------------------------
