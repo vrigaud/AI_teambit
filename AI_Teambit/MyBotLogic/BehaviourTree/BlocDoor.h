@@ -9,6 +9,11 @@
 
 using namespace std;
 
+/*
+	This block's purpose is to check for completely explored zone containing npcs in which there are 
+	matching pressure plates and doors (or just interactive doors). Once found, we fill the blackboard
+	with the information needed for opening the door and sending a scout npc in the new zone (See BlocDoorRecursion).
+*/
 
 BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
 {
@@ -29,38 +34,11 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
         else
         {
             auto zoneList = ourMap->getZoneList();
-            
-//             MiCoMa* ourMicoma = MiCoMa::getInstance();
-//             std::vector<Npc*> ourNpcs = ourMicoma->getNpcs();
-// 
-//             std::vector<Npc*> npcs{};
-//             npcs.reserve(ourMicoma->getNpcs().size());
-// 
-//             std::vector<Node*> goals{};
-//             goals.reserve(ourMap->getGoalIDs().size());
-// 
-//             unsigned int currentRecursionZoneId = bboard.getZoneIdRecursion().top();
-// 
-//             copy_if(begin(ourNpcs), end(ourNpcs), back_inserter(npcs), [&](Npc* npc)
-//             {
-//                 return ourMap->getNode(npc->getCurrentTile())->getZoneID() == currentRecursionZoneId;
-//             });
-// 
-//             auto currentZoneNodes = ourMap->getZoneList()[currentRecursionZoneId].mNodeOnZone;
-//             copy_if(begin(currentZoneNodes), end(currentZoneNodes), back_inserter(goals), [&](Node* n)
-//             {
-//                 return (n->getZoneID() == currentRecursionZoneId) && (n->getType() == Node::GOAL);
-//             });
 
             auto validZone = *find_if(begin(zoneList), end(zoneList), [](std::pair<unsigned, Zone> zone)
             {
                 return zone.second.isClosed && (zone.second.mControllerOnZone.size() || zone.second.mDoorOnZone.size());
             });
-
-
-
-
-            //validzone peut il etre == end ou nullptr??
 
             BehaviourTree::result res = BehaviourTree::result::FAIL;
 
@@ -74,7 +52,7 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
                     
                     res = BehaviourTree::result::SUCCESS;
                 }
-            }); // we have to be sure that the npc is the closer to the pp TODO - DO IT
+            }); // We should check that we send the npc closest to the pressure plate or door. WON'T BE DONE.
 
             return res;
         }

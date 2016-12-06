@@ -6,6 +6,9 @@
 #include "../Npc.h"
 #include "../Map.h"
 
+/*
+	This block's purpose is to update the different tiles onto which stand the many npcs.
+*/
 
 BehaviourTree::BaseBloc* getBlocUpdateNpcTiles(BlackBoard &bboard)
 {

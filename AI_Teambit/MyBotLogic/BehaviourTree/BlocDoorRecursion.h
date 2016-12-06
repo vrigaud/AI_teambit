@@ -14,24 +14,14 @@ using namespace std;
 class DOHiddenDoors {};
 class DoorRecException {};
 
+/*
+	This block's purpose is to ensure the progression of the different npcs whose 
+	task pertain to opening a door and/or proceed into a new zone. Technically, this simulates (thanks to the blackboard)
+	a zone exploration recursion where each zone gets explored recursively by their own npcs.
+*/
+
 BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
 {
-    //Map* mapRef = Map::getInstance();
-    //Npc* currentNpc = *MiCoMa::getInstance()->getNpcs().begin();
-    //auto currentNode = mapRef->getNode(currentNpc->getID());
-    //std::vector<Node*> npcsOnOurZone{};
-    //npcsOnOurZone.reserve(MiCoMa::getInstance()->getNpcs().size());
-
-    ////function to find brothers/npcs we have on the same zone as our
-    //currentNpc->findNpcOnTheSameZone(currentNode, npcsOnOurZone);
-
-    //if ((mapRef->getGoalIDs)->size() < npcsOnOurZone.size()) //TODO modify
-    //{
-    //    if ( ( mapRef->isLocallyLinked( currentNode->getZoneID() ) ).empty() )
-    //    {
-
-    //    }
-    //}
 
     auto blocDoorRecursionLambda = [&bboard]()
     {
@@ -39,11 +29,13 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
         Map* ourMap = Map::getInstance();
         MiCoMa* ourMicoma = MiCoMa::getInstance();
         std::vector<Npc*> ourNpcs = ourMicoma->getNpcs();
-        Npc* scout = bboard.getScout();
-        Npc* ppNpc = bboard.getPpNpc();
+        Npc* scout = bboard.getScout(); //npc tasked with the job to head into the new zone
+        Npc* ppNpc = bboard.getPpNpc(); //npc tasked with the job to stand on a pressure plate
         int targetedPP = bboard.getTargetedPP();
 
         Objective ppNpcObj = ppNpc->getObjective();
+		
+		//No targeted pressure or interactive door
         if (targetedPP == -1)
         {
             std::vector<Npc*> npcs{};
@@ -69,7 +61,7 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
             {
                 auto localController = ourMap->getLocallyLinkedControllers(currentRecursionZoneId);
                
-                // Looking for door that can be crossed alone by pressur plate
+                // Looking for door that can be crossed alone by pressure plate
                 unsigned int target{};
                 std::vector<Door> currentZoneDoors = ourMap->getZoneList()[currentRecursionZoneId].mDoorOnZone;
                 for (Controller c : localController)
@@ -93,6 +85,7 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                     [](Door door) {
                     return !door.hasPressurePlate();
                 });
+				
                 if (doorFound != end(currentZoneDoors))
                 {
                     target = ourMap->getNode(doorFound->mTileId)->getZoneID() == currentRecursionZoneId ?
@@ -115,6 +108,7 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
         }
         else
         {
+			// We check if the ppnpc has arrived
             if (ppNpc->hasFinishedJob() || ppNpc->isArrived())
             {
                 auto tile = ourMap->getNode(ppNpc->getCurrentTile());
@@ -123,12 +117,6 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                 std::vector<Door> ppDoorZone = ourMap->getZoneList()[tile->getZoneID()].mDoorOnZone;
                 auto ppDoor = find_if(begin(ppDoorZone), end(ppDoorZone), [&doorId](Door d) {return d.mIdDoor == doorId;});
 
-//                 auto controllerFound = find_if(begin(cntrllrOnZone), end(cntrllrOnZone), [&tile](Controller cntrllr)
-//                 {
-//                     return cntrllr.mTileID == tile->getId();
-//                 });
-// 
-//                 auto ppDoor = find_if(begin(ppDoorZone), end(ppDoorZone), [&controllerFound](Door d) {return d.mIdDoor == controllerFound->mIdDoor;});
                 if (bboard.getZoneIdRecursion().top() == tile->getZoneID())
                 {
                     bboard.getZoneIdRecursion().pop();
@@ -141,7 +129,7 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
                     bboard.setTargetedPP(target);
                 }
 
-                //SCOUT AND NPC
+                //SCOUT AND NPC - WON'T BE DONE
             }
 
             return BehaviourTree::result::SUCCESS;

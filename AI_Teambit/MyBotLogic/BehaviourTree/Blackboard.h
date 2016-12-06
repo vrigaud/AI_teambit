@@ -11,6 +11,10 @@
 struct Action;
 struct LevelInfo;
 
+/*
+	This class is used as a way for the different Behaviour Tree's blocks to communicate.
+*/
+
 class BlackBoard
 {
 
