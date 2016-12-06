@@ -40,7 +40,7 @@ BehaviourTree::BaseBloc* getBlocFindBGBG(BlackBoard &bboard)
             int npcId = -1;
             for (Npc* npc : ourNpcs)
             {
-                float distance = Map::getInstance()->calculateDistance(npc->getCurrentTile(), goal);
+                int distance = Map::getInstance()->calculateDistance(npc->getCurrentTile(), goal);
                 if (distance < bestDist && !npc->hasGoal())
                 {
                     npcId = npc->getID();

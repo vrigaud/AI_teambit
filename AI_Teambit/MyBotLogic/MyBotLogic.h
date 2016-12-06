@@ -23,6 +23,7 @@ class MyBotLogic : public virtual BotLogicIF
 {
     // debug stuff
     unsigned mTurnCount;
+    unsigned long long totalTime{};
     std::string mLogPath;
 
     // Temporary stuff

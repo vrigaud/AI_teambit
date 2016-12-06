@@ -11,6 +11,8 @@
 #include <chrono>
 using namespace std::chrono;
 
+class NoValidDirection {};
+
 Map Map::mInstance;
 unsigned int Map::mGreatestZoneID = 0;
 
@@ -442,29 +444,6 @@ void Map::updateTiles(TurnInfo& turnInfo)
     {
         auto tileInfo = info.second;
 
-        /*
-        if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Forbidden) != tileInfo.tileAttributes.end())
-        {
-            setNodeType(tileInfo.tileID, Node::FORBIDDEN);
-        }
-        else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_Target) != tileInfo.tileAttributes.end())
-        {
-            setNodeType(tileInfo.tileID, Node::GOAL);
-            addGoalTile(tileInfo.tileID);
-            addSeenTile(tileInfo.tileID);
-        }
-        else if (find(begin(tileInfo.tileAttributes), end(tileInfo.tileAttributes), TileAttribute_PressurePlate) != tileInfo.tileAttributes.end())
-        {
-            setNodeType(tileInfo.tileID, Node::PRESSURE_PLATE);
-            addSeenTile(tileInfo.tileID);
-        }
-        else
-        {
-            setNodeType(tileInfo.tileID, Node::PATH);
-            addSeenTile(tileInfo.tileID);
-        }*/
-
-
         if (tileInfo.tileAttributes.size() == 1)
         {
             setNodeType(tileInfo.tileID, Node::PATH);
@@ -759,6 +738,7 @@ unsigned int Map::calculateDistance(int indexStart, int indexEnd) const
     return (abs(x) + abs(y));
 }
 
+// From and to has to be real neighbour if not it'll throw an exception
 EDirection Map::getDirection(unsigned int from, unsigned int to)
 {
     Node* fromN = getNode(from);
@@ -770,6 +750,7 @@ EDirection Map::getDirection(unsigned int from, unsigned int to)
             return static_cast<EDirection>(i);
         }
     }
+    throw NoValidDirection{};
 }
 
 // Check if you can go from startTile to tileToGo in one turn

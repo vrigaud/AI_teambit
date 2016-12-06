@@ -69,7 +69,8 @@ void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _acti
 
     MiCoMa::getInstance()->update(_turnInfo, _actionList);
     auto apres = system_clock::now();
-    BOT_LOGIC_LOG(mLogger, "turn duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);    
+    totalTime += duration_cast<microseconds>(apres - avant).count();
+    BOT_LOGIC_LOG(mLogger, "moyenne Time " + std::to_string(totalTime/mTurnCount) + "us", true);    
 
 }
 
