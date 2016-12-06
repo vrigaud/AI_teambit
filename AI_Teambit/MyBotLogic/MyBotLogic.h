@@ -9,7 +9,7 @@
    #define BOT_LOGIC_DEBUG
 #endif
 
-   #define BOT_LOGIC_LOG(logger, text, autoEndLine) logger.Log(text, autoEndLine)
+#define BOT_LOGIC_LOG(logger, text, autoEndLine) logger.Log(text, autoEndLine)
 #ifdef BOT_LOGIC_DEBUG
 #else
    //#define BOT_LOGIC_LOG(logger, text, autoEndLine) 0

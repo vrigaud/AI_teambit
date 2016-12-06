@@ -31,7 +31,8 @@ void Npc::update()
 {
     BOT_LOGIC_NPC_LOG(mLogger, "TURN #" + std::to_string(++mTurnCount) + "\t current Objective Type : " + std::to_string(mObjective.mType), true);
     updateState();
-    enterStateMachine();
+    enterStateMachine(); 
+    BOT_LOGIC_NPC_LOG(mLogger, "\n\n", true);
 }
 
 void Npc::setGoal(const unsigned int goalID)
@@ -39,8 +40,8 @@ void Npc::setGoal(const unsigned int goalID)
     mGoal = goalID;
     mHasGoal = true;
     setObjective(Objective::GO_TO, mGoal);
-    BOT_LOGIC_NPC_LOG(mLogger, "GoalID : " + std::to_string(mGoal) + "\n", true);
-    searchPath();
+    BOT_LOGIC_NPC_LOG(mLogger, "GoalID : " + std::to_string(mGoal), true);
+    aStar(getCurrentTile(), mGoal);
 }
 
 void Npc::updateState()
@@ -82,6 +83,7 @@ void Npc::enterStateMachine()
     BOT_LOGIC_NPC_LOG(mLogger, "Enter state machine ->", false);
     do {
         mCurrentState = mNextState;
+
         switch (mCurrentState & STATE_LEVEL_0)
         {
         case EXPLORING:
@@ -96,6 +98,9 @@ void Npc::enterStateMachine()
         case INTERACTING:
             interacting();
             break;
+        default:
+            mCurrentState = mNextState;
+            break;
         }
     } while (mCurrentState != mNextState);
     BOT_LOGIC_NPC_LOG(mLogger, "", true);
@@ -109,6 +114,9 @@ void Npc::exploring()
         mCurrentState = mNextState;
         switch (mCurrentState)
         {
+        case SEARCH_PATH:
+            moving();
+            break;
         case EXPLORE_MAP:
             exploreMap();
             break;
@@ -123,6 +131,9 @@ void Npc::exploring()
             break;
         case MOVE:
             move();
+            break;
+        default:
+            mCurrentState = mNextState;
             break;
         }
     } while (mCurrentState != mNextState);
@@ -151,6 +162,9 @@ void Npc::moving()
             break;
         case ARRIVED:
             arrived();
+            break;
+        default:
+            mCurrentState = mNextState;
             break;
         }
     } while (mCurrentState != mNextState);
@@ -188,7 +202,10 @@ void Npc::exploreMap()
         auto temp = map->getNearestUnvisited(mPath.back());
         if (temp.size())
         {
+            mPath = vector<unsigned>{ mPath.back() }; // reset path
             setObjective(Objective::GO_TO_EXPLORE, temp[0]);
+            mNextState = SEARCH_PATH;
+            return;
         }
         else
         {
@@ -229,7 +246,6 @@ void Npc::exploreDNpc()
     mNextState = MOVE;
 
     const std::vector<Npc*> npcList = MiCoMa::getInstance()->getNpcs();
-    const Map *map = Map::getInstance();
 
     for (Npc* npc : npcList)
     {
@@ -242,6 +258,14 @@ void Npc::exploreDNpc()
         {
             mNextState = EXPLORE_WAITING;
             break;
+        }
+        if (getNextStepTile() == npc->getNextStepTile())
+        {
+            if (npc->mPath.size() > mPath.size())
+            {
+                mNextState = EXPLORE_WAITING;
+                break;
+            }
         }
     }
 }
@@ -310,13 +334,10 @@ void Npc::followPath()
         mCurrentTile = mPath.back();
 
         mNextState = FOLLOW_PATH;
-
-
-        if (mPath.back() == mObjective.mTileId)
-        {
-            mNextState = ARRIVED;
-        }
-
+    }
+    if (mPath.back() == mObjective.mTileId)
+    {
+        mNextState = ARRIVED;
     }
 }
 

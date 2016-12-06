@@ -126,9 +126,9 @@ void Map::createInfluenceMap(const InfluenceData::InfluenceType& aType)
         }
     }
 
-//    std::sort(begin(mInterestingNodes), end(mInterestingNodes), [](const Node* a, const Node* b) {
-//        return a->getInfluence() > b->getInfluence();
-//    });
+    //    std::sort(begin(mInterestingNodes), end(mInterestingNodes), [](const Node* a, const Node* b) {
+    //        return a->getInfluence() > b->getInfluence();
+    //    });
 
     propagateInfluence();
 
@@ -226,18 +226,28 @@ std::vector<unsigned int> Map::getNearestUnvisited(unsigned int tileId)
     std::vector<unsigned int> v{};
     unsigned int foundID{};
     bool found = false;
-    for (std::pair<unsigned, bool> tile: mKnownTilesAndVisitedStatus)
+//     for (std::pair<unsigned, bool> tile : mKnownTilesAndVisitedStatus)
+//     {
+//         if (tile.second)
+//         {
+//             continue;
+//         }
+// 
+//         float distance = calculateDistance(tileId, tile.first);
+//         if (distance < bestDist)
+//         {
+//             found = true;
+//             foundID = tile.first;
+//             bestDist = distance;
+//         }
+//     }
+    for (Node* tile : mInterestingNodes)
     {
-        if (tile.second)
-        {
-            continue;
-        }
-
-        float distance = calculateDistance(tileId, tile.first);
+        float distance = calculateDistance(tileId, tile->getId());
         if (distance < bestDist)
         {
             found = true;
-            foundID = tile.first;
+            foundID = tile->getId();
             bestDist = distance;
         }
     }
@@ -251,43 +261,43 @@ std::vector<unsigned int> Map::getNearestUnvisited(unsigned int tileId)
 
 void Map::updateMap(TurnInfo& turnInfo)
 {
-/*
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "TURN# " + std::to_string(turnInfo.turnNb), true);
-    long long sum{};
+    /*
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "TURN# " + std::to_string(turnInfo.turnNb), true);
+        long long sum{};
 
-    //Edges need to be updated first to avoid adding unaccessible goal
-    auto avant = system_clock::now();
-    updateEdges(turnInfo);
-    auto apres = system_clock::now();
-    sum += duration_cast<microseconds>(apres - avant).count();
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateEdges duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
+        //Edges need to be updated first to avoid adding unaccessible goal
+        auto avant = system_clock::now();
+        updateEdges(turnInfo);
+        auto apres = system_clock::now();
+        sum += duration_cast<microseconds>(apres - avant).count();
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateEdges duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
 
-    avant = system_clock::now();
-    updateTiles(turnInfo);
-    apres = system_clock::now();
-    sum += duration_cast<microseconds>(apres - avant).count();
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateTiles duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
+        avant = system_clock::now();
+        updateTiles(turnInfo);
+        apres = system_clock::now();
+        sum += duration_cast<microseconds>(apres - avant).count();
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateTiles duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
 
-    
-    avant = system_clock::now();
-    updateZones(turnInfo);
-    apres = system_clock::now();
-    sum += duration_cast<microseconds>(apres - avant).count();
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateZones duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
 
-    //Log
-    logZones(turnInfo.turnNb);
+        avant = system_clock::now();
+        updateZones(turnInfo);
+        apres = system_clock::now();
+        sum += duration_cast<microseconds>(apres - avant).count();
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "\t UpdateZones duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us", true);
 
-    // TODO - relocate in MiCoMa or Npc : up to you bruh
-    avant = system_clock::now();
-    createInfluenceMap();
-    apres = system_clock::now();
-    sum += duration_cast<microseconds>(apres - avant).count();
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "\t Influence map duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us \n", true);
-    logInfluenceMap(turnInfo.turnNb);
+        //Log
+        logZones(turnInfo.turnNb);
 
-    BOT_LOGIC_MAP_LOG(mLoggerTime, "\t Update map average duration : " + std::to_string(sum) + "us \n", true);
-*/
+        // TODO - relocate in MiCoMa or Npc : up to you bruh
+        avant = system_clock::now();
+        createInfluenceMap();
+        apres = system_clock::now();
+        sum += duration_cast<microseconds>(apres - avant).count();
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "\t Influence map duration : " + std::to_string(duration_cast<microseconds>(apres - avant).count()) + "us \n", true);
+        logInfluenceMap(turnInfo.turnNb);
+
+        BOT_LOGIC_MAP_LOG(mLoggerTime, "\t Update map average duration : " + std::to_string(sum) + "us \n", true);
+    */
 
     //Edges need to be updated first to avoid adding unaccessible goal
     updateEdges(turnInfo);
@@ -481,7 +491,7 @@ void Map::updateTiles(TurnInfo& turnInfo)
         }
     }
 }
-       
+
 void Map::updateZones(TurnInfo& turnInfo)
 {
     std::fill(begin(mWasDiffused), end(mWasDiffused), false);

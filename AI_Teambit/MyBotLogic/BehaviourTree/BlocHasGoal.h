@@ -4,6 +4,8 @@
 #include "GeneralAction.h"
 #include "..\MiCoMa.h"
 #include "..\Npc.h"
+#include <iterator>
+#include <algorithm>
 
 
 /* Sets an objective to each Npc.
@@ -13,6 +15,7 @@ BehaviourTree::BaseBloc* getBlocHasGoal(BlackBoard &bboard)
     auto forHasGoalLambda = [&bboard]()
     {
         std::map<unsigned int, unsigned int> goalMap = bboard.getGoalMap();
+
 		auto npcs = MiCoMa::getInstance()->getNpcs();
         for (Npc* curNpc : npcs)
         {
@@ -25,7 +28,10 @@ BehaviourTree::BaseBloc* getBlocHasGoal(BlackBoard &bboard)
                 }
                 else
                 {
-                    curNpc->setObjective(Objective::SEARCH_MAP);
+                    if (curNpc->getObjective().mIsAchieved || curNpc->getObjective().mType == Objective::NONE)
+                    {
+                        curNpc->setObjective(Objective::SEARCH_MAP);
+                    }
                 }
             }
         }

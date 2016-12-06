@@ -71,6 +71,7 @@ public:
     void update();
 
 	bool hasGoal() { return mHasGoal; }
+    unsigned int getGoal() { return mGoal; }
 	void setGoal(const unsigned int goalID);
     void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1, unsigned int doorID = 0)
     {
