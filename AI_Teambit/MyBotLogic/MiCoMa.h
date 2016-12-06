@@ -3,6 +3,7 @@
 
 #include "Singleton.h"
 #include "Objective.h"
+#include "BehaviourTree/GeneralAction.h"
 
 #include "Logger.h"
 #ifdef _DEBUG
@@ -15,9 +16,10 @@
 #define BOT_LOGIC_MICOMA_LOG(logger, text, autoEndLine) 0
 #endif
 
-#include <vector>
 #include <algorithm>
 #include <map>
+#include <vector>
+#include "BehaviourTree/BehaviourTree.h"
 
 
 
@@ -26,6 +28,7 @@ struct LevelInfo;
 struct TurnInfo;
 struct NPCInfo;
 struct Action;
+
 class MiCoMa : Singleton
 {
 
@@ -34,6 +37,7 @@ class MiCoMa : Singleton
 	std::map<unsigned int, unsigned int> findBestGoalByGoal(std::map<unsigned int, NPCInfo> npcInfo, const std::vector<unsigned int>& targetList);
 	
 	Logger mLogger;
+	BehaviourTree::BehaviourTreeObject mBTree;
 
 public :
     static MiCoMa* getInstance()
@@ -44,8 +48,10 @@ public :
 
     void init(const LevelInfo&);
     void update(const TurnInfo&, std::vector<Action*>&);
-
-	std::vector<Npc*> getNpcs() const { return mNpcs; }
+    std::vector<Npc*>& getNpcs() noexcept
+    {
+        return mNpcs;
+    }
 };
 
 #endif //MICOMA_H

@@ -39,6 +39,7 @@ class Npc
         FOLLOW_PATH,
         MOVING_DNPC,
         MOVING_WAITING,
+        INTERACTING = 0b11000,
         ARRIVED
     };
     enum StateMask
@@ -66,15 +67,35 @@ class Npc
 
 public:
 
-
     Npc(unsigned int a_id, unsigned int a_tileId);
     void update();
 
 	bool hasGoal() { return mHasGoal; }
+    unsigned int getGoal() { return mGoal; }
 	void setGoal(const unsigned int goalID);
-    void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
+    void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1, unsigned int doorID = 0)
     {
         mObjective = Objective{ aType, tileId };
+        mObjective.mDoorId = doorID;
+    }
+    bool isArrived()
+    {
+        return getCurrentTile() == mGoal;
+    }
+
+    bool hasFinishedJob()
+    {
+        return mObjective.mIsAchieved;
+    }
+
+    Objective getObjective() const 
+    {
+        return mObjective;
+    }
+
+    bool isArrived() const 
+    {
+        return mCurrentState == ARRIVED;
     }
 
     // Debug Mission
@@ -86,8 +107,28 @@ public:
 	unsigned int getObjectiveTile() { return mObjective.mTileId; }
 	//Returns the ID of the next tile on which the NPC is supposed to move
 	//Returns the ID of the current tile if no move expected
-	unsigned int getNextStepTile() { return (mPath.size() == 1 ? mPath.back() : mPath[mPath.size() - 2]); }
-	unsigned int getCurrentTile() { return mPath.back(); }
+	unsigned int getNextStepTile() 
+	{ 
+		if(mPath.size())
+		{
+			return (mPath.size() == 1 ? mPath.back() : mPath[mPath.size() - 2]); 
+		}
+		else
+		{
+			return getCurrentTile();
+		}
+	}
+	unsigned int getCurrentTile() 
+	{
+		if(mPath.size())
+		{
+			return mPath.back(); 
+		}
+		else
+		{
+			return mCurrentTile;
+		}
+	}
 
 	std::vector<unsigned int> getPath() { return mPath; }
 	Action* getAction() { return mAction; }
@@ -98,7 +139,9 @@ public:
 		return action;
 	}
 
+
 private:
+	unsigned int mCurrentTile{};
     void updateState();
     void enterStateMachine();
 
@@ -106,6 +149,7 @@ private:
     void exploring();
     void moving();
     void waiting();
+    void interacting();
 
     // Level 1 function for EXPLORING state cluster
     void exploreMap();
@@ -128,6 +172,7 @@ private:
 
 	bool isBlockedByNpc(Npc* npc);
 	bool hasShorterPath(Npc* npc);
+
 };
 
 #endif // NPC_H

@@ -49,6 +49,32 @@ SET( AIBOT_HEADERS
 	MyBotLogic/Npc.h
 	MyBotLogic/LoggerPath.h
 	MyBotLogic/Objective.h
+
+	#BehaviourTree
+	MyBotLogic/BehaviourTree/BaseBloc.h
+	MyBotLogic/BehaviourTree/BlackBoard.h
+	
+    MyBotLogic/BehaviourTree/BehaviourTree.h
+	MyBotLogic/BehaviourTree/BlocAction.h
+	MyBotLogic/BehaviourTree/BlocComposite.h
+	MyBotLogic/BehaviourTree/BlocDecorator.h
+	MyBotLogic/BehaviourTree/BlocFail.h
+	MyBotLogic/BehaviourTree/BlocInvert.h
+	MyBotLogic/BehaviourTree/BlocLoop.h
+	MyBotLogic/BehaviourTree/BlocSelect.h
+	MyBotLogic/BehaviourTree/BlocSequence.h
+	MyBotLogic/BehaviourTree/BlocSuccess.h
+	MyBotLogic/BehaviourTree/GeneralAction.h
+
+    #ConcreteActions
+	MyBotLogic/BehaviourTree/BlocFindBGBG.h
+	MyBotLogic/BehaviourTree/BlocFindBGBNpc.h
+    MyBotLogic/BehaviourTree/BlocDoor.h
+    MyBotLogic/BehaviourTree/BlocDoorRecursion.h
+	MyBotLogic/BehaviourTree/BlocHasGoal.h
+    MyBotLogic/BehaviourTree/BlocHasNoDevice.h
+    MyBotLogic/BehaviourTree/BlocUpdateNpcTiles.h
+	MyBotLogic/BehaviourTree/BlocUpdateActionList.h
 )
 
 SET( AIBOT_SRC 
@@ -61,6 +87,9 @@ SET( AIBOT_SRC
 
 	#MY_BOT
 	MyBotLogic/MyBotLogic.cpp
+	MyBotLogic/BehaviourTree/BlackBoard.cpp
+	MyBotLogic/BehaviourTree/BehaviourTree.cpp
+
 	MyBotLogic/Map.cpp
 	MyBotLogic/Node.cpp
 	MyBotLogic/MiCoMa.cpp

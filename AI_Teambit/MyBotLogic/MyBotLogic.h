@@ -9,10 +9,10 @@
    #define BOT_LOGIC_DEBUG
 #endif
 
+#define BOT_LOGIC_LOG(logger, text, autoEndLine) logger.Log(text, autoEndLine)
 #ifdef BOT_LOGIC_DEBUG
-   #define BOT_LOGIC_LOG(logger, text, autoEndLine) logger.Log(text, autoEndLine)
 #else
-   #define BOT_LOGIC_LOG(logger, text, autoEndLine) 0
+   //#define BOT_LOGIC_LOG(logger, text, autoEndLine) 0
 #endif
 
 #include <vector>
@@ -23,6 +23,7 @@ class MyBotLogic : public virtual BotLogicIF
 {
     // debug stuff
     unsigned mTurnCount;
+    unsigned long long totalTime{};
     std::string mLogPath;
 
     // Temporary stuff
@@ -33,9 +34,9 @@ public:
 
 	virtual void Configure(int argc, char *argv[], const std::string& _logpath);
 	virtual void Load();
+    virtual void Start();
 	virtual void OnBotInitialized();
 	virtual void Init(LevelInfo& _levelInfo);
-	virtual void OnGameStarted();
 	virtual void FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList);  
 	virtual void Exit();
 
