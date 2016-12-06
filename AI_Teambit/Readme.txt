@@ -40,7 +40,8 @@ DEMARRAGE ET AFFICHAGE AUTOMATIQUE HTML DES RÉSULTATS DE TOUS LES TABLEAUX.
 
 Pré-requis supplémentaire: Google Chrome
 
-*NB: SVP lancer les .bat dessous dans le répertoire COURANT du fichier .bat.
+*NB: - SVP lancer les .bat dessous dans le répertoire COURANT du fichier .bat.
+	 - Le chemin d'accès au répertoire courant ne doit pas contenir d'espace(s).
 
 Ouvrir Google Chrome.
 
