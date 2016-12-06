@@ -89,7 +89,6 @@ SET( AIBOT_SRC
 	MyBotLogic/MyBotLogic.cpp
 	MyBotLogic/BehaviourTree/BlackBoard.cpp
 	MyBotLogic/BehaviourTree/BehaviourTree.cpp
-    MyBotLogic/BehaviourTree/BlocUpdateNpcTiles.cpp
 
 	MyBotLogic/Map.cpp
 	MyBotLogic/Node.cpp
