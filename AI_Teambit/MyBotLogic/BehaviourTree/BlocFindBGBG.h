@@ -9,28 +9,46 @@ BehaviourTree::BaseBloc* getBlocFindBGBG(BlackBoard &bboard)
 {
 	auto findBGBGLambda = [&bboard]()
     {
+        MiCoMa* ourMicoma = MiCoMa::getInstance();
+        Map* ourMap = Map::getInstance();
         std::vector<unsigned int> targetList = Map::getInstance()->getGoalIDs();
-		std::map<unsigned int, NPCInfo> npcInfo = bboard.getTurnInfo().npcs;
-        std::map<unsigned int, unsigned int> tempGoalMap{};
+        std::vector<Npc*> ourNpcs = ourMicoma->getNpcs();
 
+        std::map<unsigned, unsigned> tempGoalMap{};
         for (unsigned goal : targetList)
         {
-            if (npcInfo.size() <= 0)
-            {
+            if (ourNpcs.size() <= 0)
+            { 
                 break;
             }
-            int bestDist = 666;
-            int npcId = -1;for (std::pair<unsigned, NPCInfo> npc : npcInfo)
-            {
-                float distance = Map::getInstance()->calculateDistance(npc.second.tileID, goal);
-                if (distance < bestDist)
+
+            bool alreadyAssign = false;
+            for (Npc* npc : ourNpcs)
+            {// Check if goal is already assign
+                if (npc->hasGoal() && npc->getGoal() == goal)
                 {
-                    npcId = npc.second.npcID;
+                    alreadyAssign = true;
+                    break;
+                }
+            }
+            if (alreadyAssign)
+            {
+                continue;
+            }
+
+            int bestDist = 666;
+            int npcId = -1;
+            for (Npc* npc : ourNpcs)
+            {
+                int distance = Map::getInstance()->calculateDistance(npc->getCurrentTile(), goal);
+                if (distance < bestDist && !npc->hasGoal())
+                {
+                    npcId = npc->getID();
                     bestDist = distance;
                 }
             }
             tempGoalMap[npcId] = goal;
-            npcInfo.erase(npcId);
+            ourNpcs.erase(find_if(begin(ourNpcs), end(ourNpcs), [npcId](Npc* npc) {return npc->getID() == npcId;}));
         }
 
 		bboard.setGoalMap(tempGoalMap);

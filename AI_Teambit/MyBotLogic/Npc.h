@@ -39,6 +39,7 @@ class Npc
         FOLLOW_PATH,
         MOVING_DNPC,
         MOVING_WAITING,
+        INTERACTING = 0b11000,
         ARRIVED
     };
     enum StateMask
@@ -70,10 +71,21 @@ public:
     void update();
 
 	bool hasGoal() { return mHasGoal; }
+    unsigned int getGoal() { return mGoal; }
 	void setGoal(const unsigned int goalID);
-    void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1)
+    void setObjective(Objective::ObjectiveType aType = Objective::NONE, int tileId = -1, unsigned int doorID = 0)
     {
         mObjective = Objective{ aType, tileId };
+        mObjective.mDoorId = doorID;
+    }
+    bool isArrived()
+    {
+        return getCurrentTile() == mGoal;
+    }
+
+    bool hasFinishedJob()
+    {
+        return mObjective.mIsAchieved;
     }
 
     Objective getObjective() const 
@@ -137,6 +149,7 @@ private:
     void exploring();
     void moving();
     void waiting();
+    void interacting();
 
     // Level 1 function for EXPLORING state cluster
     void exploreMap();

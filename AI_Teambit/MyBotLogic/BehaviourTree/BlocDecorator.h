@@ -23,20 +23,22 @@ namespace BehaviourTree
             delete onlyChild;
         }
 
-        virtual BaseBloc* child(size_t index) noexcept
+        virtual BaseBloc* getChild(size_t index) noexcept
         {
             return onlyChild;
         }
 
-        virtual size_t nbChild() const noexcept
+        virtual size_t getNbChild() const noexcept
         {
             return 1;
         }
 
-        virtual type type() const noexcept
+        virtual type getType() const noexcept
         {
             return type::DECORATOR;
         }
+
+
 
         void connect(BaseBloc& toConnect) {}
 

@@ -6,6 +6,10 @@
 #include "LoggerPath.h"
 #include <windows.h>
 #include <algorithm>
+#include <chrono>
+
+
+using namespace std::chrono;
 
 MyBotLogic::MyBotLogic()
 {
@@ -19,8 +23,8 @@ MyBotLogic::~MyBotLogic()
 
 void MyBotLogic::Configure(int argc, char *argv[], const std::string& _logpath)
 {
-#ifdef BOT_LOGIC_DEBUG
     mLogger.Init(_logpath, "MyBotLogic.log");
+#ifdef BOT_LOGIC_DEBUG
 #endif
 
     BOT_LOGIC_LOG(mLogger, "Configure", true);
@@ -54,20 +58,19 @@ void MyBotLogic::Start()
     //Write Code Here
 }
 
-void MyBotLogic::OnGameStarted()
-{
-    //Write Code Here
-}
-
 void MyBotLogic::FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList)
 {
     BOT_LOGIC_LOG(mLogger, "\nTURN #" + std::to_string(++mTurnCount), true);
+    auto avant = system_clock::now();
 
     // Update graph
     Map::getInstance()->updateMap(_turnInfo);
     Map::getInstance()->logMap(mTurnCount);
 
     MiCoMa::getInstance()->update(_turnInfo, _actionList);
+    auto apres = system_clock::now();
+    totalTime += duration_cast<microseconds>(apres - avant).count();
+    BOT_LOGIC_LOG(mLogger, "moyenne Time " + std::to_string(totalTime/mTurnCount) + "us", true);    
 
 }
 

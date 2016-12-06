@@ -38,12 +38,20 @@ struct Door
     unsigned int mTileId;
     unsigned int mOtherSideTileId;
     EDirection mDoorDirection;
+    EDirection mOtherSideDirection;
     std::vector<Controller> mControllerId;
     unsigned int mIdDoor;
 
-    Door(unsigned int tileId, unsigned int otherSideId, EDirection dir, unsigned int drId) : mTileId{ tileId }, mOtherSideTileId{ otherSideId }, mDoorDirection{ dir }, mControllerId{}, mIdDoor{ drId }
+    Door(unsigned int tileId, unsigned int otherSideId, EDirection dir, unsigned int drId)
+        : mTileId{ tileId }, mOtherSideTileId{ otherSideId }, mDoorDirection{ dir }, mOtherSideDirection{}, mControllerId {}, mIdDoor{ drId }
     {
+        mOtherSideDirection = static_cast<EDirection>((dir + 4) % 8);
         mControllerId.reserve(10);
+    }
+
+    bool hasPressurePlate()
+    {
+        return mControllerId.size();
     }
 
     bool operator==(const Door& d0)
@@ -103,6 +111,7 @@ class Map : Singleton
     Logger mLoggerEdges;
     Logger mLoggerInfluence;
 	Logger mLoggerGalacticZones;
+    Logger mLoggerTime;
 
 private:
 	Map() : mWidth(0), mHeight(0)
@@ -151,7 +160,8 @@ public:
         return mGoalTiles;
     }
 	void createInfluenceMap(const InfluenceData::InfluenceType& = InfluenceData::INFLUENCE_MAP);
-    std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const; 
+    std::vector<unsigned int> getCloseMostInfluenteTile(unsigned int) const;
+    std::vector<unsigned int> getNearestUnvisited(unsigned int tileId);
 
     // Getter and Setter
 	Node* getNode(unsigned int, unsigned int) const;
@@ -183,6 +193,7 @@ public:
         mInfluenceRange = range;
     }
 	void addSeenTile(unsigned tileId);
+    void addVisitedTile(unsigned tileId);
 
     unsigned int calculateDistance(int start, int end) const;
     EDirection getDirection(unsigned int from, unsigned int to);

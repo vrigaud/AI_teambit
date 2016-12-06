@@ -9,6 +9,11 @@
 
 using namespace std;
 
+/*
+	This block's purpose is to check for completely explored zone containing npcs in which there are 
+	matching pressure plates and doors (or just interactive doors). Once found, we fill the blackboard
+	with the information needed for opening the door and sending a scout npc in the new zone (See BlocDoorRecursion).
+*/
 
 BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
 {
@@ -29,12 +34,11 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
         else
         {
             auto zoneList = ourMap->getZoneList();
-            auto validZone = *find_if(begin(zoneList), end(zoneList), [](auto zone)
-            {
-                return zone.second.isClosed && zone.second.mControllerOnZone.size();
-            });
 
-            //validzone peut il etre == end ou nullptr??
+            auto validZone = *find_if(begin(zoneList), end(zoneList), [](std::pair<unsigned, Zone> zone)
+            {
+                return zone.second.isClosed && (zone.second.mControllerOnZone.size() || zone.second.mDoorOnZone.size());
+            });
 
             BehaviourTree::result res = BehaviourTree::result::FAIL;
 
@@ -48,7 +52,7 @@ BehaviourTree::BaseBloc* getBlocDoor(BlackBoard &bboard)
                     
                     res = BehaviourTree::result::SUCCESS;
                 }
-            }); // we have to be sure that the npc is the closer to the pp TODO - DO IT
+            }); // We should check that we send the npc closest to the pressure plate or door. WON'T BE DONE.
 
             return res;
         }
