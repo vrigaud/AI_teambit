@@ -9,10 +9,10 @@
    #define BOT_LOGIC_DEBUG
 #endif
 
-#ifdef BOT_LOGIC_DEBUG
    #define BOT_LOGIC_LOG(logger, text, autoEndLine) logger.Log(text, autoEndLine)
+#ifdef BOT_LOGIC_DEBUG
 #else
-   #define BOT_LOGIC_LOG(logger, text, autoEndLine) 0
+   //#define BOT_LOGIC_LOG(logger, text, autoEndLine) 0
 #endif
 
 #include <vector>
@@ -36,7 +36,6 @@ public:
     virtual void Start();
 	virtual void OnBotInitialized();
 	virtual void Init(LevelInfo& _levelInfo);
-	virtual void OnGameStarted();
 	virtual void FillActionList(TurnInfo& _turnInfo, std::vector<Action*>& _actionList);  
 	virtual void Exit();
 

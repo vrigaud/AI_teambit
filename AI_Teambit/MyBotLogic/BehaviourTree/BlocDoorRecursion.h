@@ -68,60 +68,76 @@ BehaviourTree::BaseBloc* getBlocDoorRecursion(BlackBoard &bboard)
             if (goals.size() < npcs.size())
             {
                 auto localController = ourMap->getLocallyLinkedControllers(currentRecursionZoneId);
-                if (localController.empty())
+               
+                // Looking for door that can be crossed alone by pressur plate
+                unsigned int target{};
+                std::vector<Door> currentZoneDoors = ourMap->getZoneList()[currentRecursionZoneId].mDoorOnZone;
+                for (Controller c : localController)
                 {
-                    throw DOHiddenDoors();
-                    //HIDDEN DOORS - TODO - DO IT
-                }
-                else
-                {
-                    // Looking for door that can be crossed alone
-                    unsigned int target{};
-                    std::vector<Door> currentZoneDoors = ourMap->getZoneList()[currentRecursionZoneId].mDoorOnZone;
-                    Zone zone1 = ourMap->getZoneList()[currentRecursionZoneId];
-                    for (Controller c : localController)
+                    auto doorFound = find_if(begin(currentZoneDoors), end(currentZoneDoors),
+                        [&c](Door door) {
+                        return (door.mTileId == c.mTileID || door.mOtherSideTileId == c.mTileID) && c.mIdDoor == door.mIdDoor;
+                    });
+                    if (doorFound != end(currentZoneDoors))
                     {
-                        auto doorFound = find_if(begin(currentZoneDoors), end(currentZoneDoors),
-                            [&c](Door door) {
-                            return (door.mTileId == c.mTileID || door.mOtherSideTileId == c.mTileID) && c.mIdDoor == door.mIdDoor;
-                        });
-                        if (doorFound != end(currentZoneDoors))
-                        {
-                            target = c.mTileID;
-                            ppNpc->setGoal(target);
-                            bboard.setTargetedPP(target);
-                            return BehaviourTree::result::SUCCESS;
-                        }
+                        target = c.mTileID;
+                        ppNpc->setObjective(Objective::GO_TO,target);
+                        bboard.setTargetedPP(target);
+                        bboard.setTargetedDoor(doorFound->mIdDoor);
+                        return BehaviourTree::result::SUCCESS;
                     }
+                }
 
-                    // Looking for other pressure plate
-                    target = begin(localController)->mTileID;
-                    ppNpc->setGoal(target);
+                // Looking for door that can be crossed alone by action
+                auto doorFound = find_if(begin(currentZoneDoors), end(currentZoneDoors),
+                    [](Door door) {
+                    return !door.hasPressurePlate();
+                });
+                if (doorFound != end(currentZoneDoors))
+                {
+                    target = ourMap->getNode(doorFound->mTileId)->getZoneID() == currentRecursionZoneId ?
+                        doorFound->mTileId : doorFound->mOtherSideTileId;
+                    ppNpc->setObjective(Objective::GO_TO_BUTTON_DOOR, target, doorFound->mIdDoor);
                     bboard.setTargetedPP(target);
+                    bboard.setTargetedDoor(doorFound->mIdDoor);
                     return BehaviourTree::result::SUCCESS;
                 }
+
+                // Looking for other pressure plate
+                target = begin(localController)->mTileID;
+                ppNpc->setObjective(Objective::GO_TO, target);
+                bboard.setTargetedPP(target);
+                bboard.setTargetedDoor(doorFound->mIdDoor);
+                return BehaviourTree::result::SUCCESS;
+                
             }
             throw DoorRecException();
         }
         else
         {
-            if (ppNpc->isArrived())
+            if (ppNpc->hasFinishedJob() || ppNpc->isArrived())
             {
                 auto tile = ourMap->getNode(ppNpc->getCurrentTile());
                 auto cntrllrOnZone = ourMap->getZoneList()[tile->getZoneID()].mControllerOnZone;
+                unsigned int doorId = bboard.getTargetedDoor();
+                std::vector<Door> ppDoorZone = ourMap->getZoneList()[tile->getZoneID()].mDoorOnZone;
+                auto ppDoor = find_if(begin(ppDoorZone), end(ppDoorZone), [&doorId](Door d) {return d.mIdDoor == doorId;});
 
-                auto doorId = find_if(begin(cntrllrOnZone), end(cntrllrOnZone), [&tile](Controller cntrllr)
+//                 auto controllerFound = find_if(begin(cntrllrOnZone), end(cntrllrOnZone), [&tile](Controller cntrllr)
+//                 {
+//                     return cntrllr.mTileID == tile->getId();
+//                 });
+// 
+//                 auto ppDoor = find_if(begin(ppDoorZone), end(ppDoorZone), [&controllerFound](Door d) {return d.mIdDoor == controllerFound->mIdDoor;});
+                if (bboard.getZoneIdRecursion().top() == tile->getZoneID())
                 {
-                    return cntrllr.mTileID == tile->getId();
-                });
-
-                auto ppDoorZone = ourMap->getZoneList()[tile->getZoneID()].mDoorOnZone;
-                auto ppDoor = find_if(begin(ppDoorZone), end(ppDoorZone), [&doorId](Door d) {return d.mIdDoor == doorId->mIdDoor;});
+                    bboard.getZoneIdRecursion().pop();
+                }
 
                 if (tile->getId() == ppDoor->mTileId || tile->getId() == ppDoor->mOtherSideTileId) // PP is direct neighbour of door
                 {
                     unsigned int target = tile->getId() == ppDoor->mTileId ? ppDoor->mOtherSideTileId : ppDoor->mTileId;
-                    ppNpc->setGoal(target);
+                    ppNpc->setObjective(Objective::GO_TO, target);
                     bboard.setTargetedPP(target);
                 }
 

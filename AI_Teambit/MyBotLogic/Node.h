@@ -52,12 +52,12 @@ class Node
 public:
     enum NodeType
     {
-        NONE,
-        FORBIDDEN,
-        GOAL,
-        OCCUPIED,
-        PRESSURE_PLATE,
-        PATH
+        NONE = 0b1,
+        FORBIDDEN = 0b10,
+        GOAL = 0b100,
+        OCCUPIED = 0b1000,
+        PRESSURE_PLATE = 0b10000,
+        PATH = 0b100000
     };
     
     enum { NBNEIGHBOURS = 8 };
@@ -138,6 +138,11 @@ public:
     bool isEdgeBlocked(const EDirection& dir) const
     {
         return mEdges[dir].mBlocking && !mEdges[dir].mOpen;
+    }
+
+    bool isEdgeDoor(const EDirection& dir) const
+    {
+        return mEdges[dir].mEdgeType == EdgeData::DOOR || mEdges[dir].mEdgeType == EdgeData::DOOR_W;
     }
 
     void setNeighbour(const EDirection& dir, Node* p)

@@ -20,7 +20,8 @@ BehaviourTree::BaseBloc* getBlocFindBGBG(BlackBoard &bboard)
                 break;
             }
             int bestDist = 666;
-            int npcId = -1;for (std::pair<unsigned, NPCInfo> npc : npcInfo)
+            int npcId = -1;
+            for (std::pair<unsigned, NPCInfo> npc : npcInfo)
             {
                 float distance = Map::getInstance()->calculateDistance(npc.second.tileID, goal);
                 if (distance < bestDist)
